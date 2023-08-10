@@ -21,6 +21,9 @@ import (
 	"tailscale.com/tsweb"
 	"tailscale.com/types/logger"
 
+	// If you want to support other source types with this tool, you will need
+	// to import other database drivers below.
+
 	// SQLite driver for database/sql.
 	_ "modernc.org/sqlite"
 )
