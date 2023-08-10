@@ -48,8 +48,19 @@ func mustInitSQLite(t *testing.T) *sql.DB {
 	return db
 }
 
-func mustGet(t *testing.T, cli *http.Client, url string) []byte {
-	rsp, err := cli.Get(url)
+func mustGet(t *testing.T, cli *http.Client, url string, headers ...string) []byte {
+	if len(headers)%2 != 0 {
+		t.Fatal("Invalid header list")
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		t.Fatalf("NewRequest: %v", err)
+	}
+	req.AddCookie(&http.Cookie{Name: "tailsqlQuery", Value: "1"})
+	for i := 0; i+1 < len(headers); i += 2 {
+		req.Header.Set(headers[i], headers[i+1])
+	}
+	rsp, err := cli.Do(req)
 	if err != nil {
 		t.Fatalf("Get %q failed: %v", url, err)
 	}
@@ -179,9 +190,21 @@ func TestServer(t *testing.T) {
 		url := htest.URL + "/json?" + q.Encode()
 
 		const want = `{"name":"amelie"}`
-		got := strings.TrimSpace(string(mustGet(t, cli, url)))
+		got := strings.TrimSpace(string(mustGet(t, cli, url, "sec-tailsql", "1")))
 		if got != want {
 			t.Errorf("JSON result: got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("JSON_noHeader", func(t *testing.T) {
+		q := url.Values{"q": {"select * from whatever"}}
+		url := htest.URL + "/json?" + q.Encode()
+
+		rsp, err := cli.Get(url) // no forbidden header
+		if err != nil {
+			t.Fatalf("Get %q failed: %v", url, err)
+		} else if got, want := rsp.StatusCode, http.StatusForbidden; got != want {
+			t.Errorf("Get %q: got status %v, want %v", url, got, want)
 		}
 	})
 
@@ -194,6 +217,18 @@ func TestServer(t *testing.T) {
 		got := string(mustGet(t, cli, url))
 		if got != want {
 			t.Errorf("CSV result: got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("CSV_noHeader", func(t *testing.T) {
+		q := url.Values{"q": {"select * from whatever"}}
+		url := htest.URL + "/csv?" + q.Encode()
+
+		rsp, err := cli.Get(url) // no forbidden header
+		if err != nil {
+			t.Fatalf("Get %q failed: %v", url, err)
+		} else if got, want := rsp.StatusCode, http.StatusForbidden; got != want {
+			t.Errorf("Get %q: got status %v, want %v", url, got, want)
 		}
 	})
 
