@@ -91,7 +91,7 @@ func generateBasicConfig(path string) {
 	enc.SetIndent("", "  ")
 	eerr := enc.Encode(tailsql.Options{
 		Hostname:    "localhost",
-		LocalState:  "runlocal-state.db",
+		LocalState:  "tailsql-state.db",
 		LocalSource: "local",
 		Sources: []tailsql.DBSpec{{
 			Source: "main",
