@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tailscale/tailsql/tailsql"
+	"github.com/tailscale/tailsql/server/tailsql"
 	"tailscale.com/tsweb"
 
 	// SQLite driver for database/sql.

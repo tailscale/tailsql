@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tailscale/tailsql/tailsql"
+	"github.com/tailscale/tailsql/server/tailsql"
 	"golang.org/x/exp/slices"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
