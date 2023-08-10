@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tailscale/tailsql/authorizer"
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
 	"golang.org/x/exp/slices"
@@ -113,6 +114,7 @@ func TestServer(t *testing.T) {
 			{Anchor: testAnchor, URL: testURL},
 		},
 		UIRewriteRules: testUIRules,
+		Authorize:      authorizer.PeerCaps(nil),
 	})
 	if err != nil {
 		t.Fatalf("NewServer: unexpected error: %v", err)
