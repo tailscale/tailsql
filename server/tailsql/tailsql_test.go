@@ -10,14 +10,17 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"html/template"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/tailscale/tailsql/server/tailsql"
+	"github.com/tailscale/tailsql/uirules"
 	"golang.org/x/exp/slices"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
@@ -58,6 +61,29 @@ func mustGet(t *testing.T, cli *http.Client, url string) []byte {
 		t.Fatalf("Get %q: read body: %v", url, err)
 	}
 	return data
+}
+
+// An ordered list of rewrite rules for rendering text for the UI.
+// If a value matches the regular expression, the function is called with the
+// original string and the match results to generate a replacement value.
+var testUIRules = []tailsql.UIRewriteRule{
+	uirules.StripeIDLink,
+	uirules.FormatSQLSource,
+
+	// Decorate references to Go documentation.
+	{
+		Value: regexp.MustCompile(`^godoc:(.+)$`),
+		Apply: func(col, s string, match []string) any {
+			return template.HTML(fmt.Sprintf(
+				`<a href="https://godoc.org?q=%[1]s"`+
+					` title="look up Go documentation"`+
+					`>%[1]s</a>`, match[1],
+			))
+		},
+	},
+
+	// This rule is last to exercise order.
+	uirules.FormatJSONText,
 }
 
 func TestServer(t *testing.T) {
