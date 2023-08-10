@@ -45,3 +45,21 @@ curl -s http://localhost:8080/json --url-query 'q=select location, count(*) n fr
 # Check the query log.
 curl -s http://localhost:8080/json --url-query 'q=select * from query_log' --url-query src=local
 ```
+
+## Running on Tailscale
+
+To run as a Tailscale node, make sure the `"hostname"` field is set in the
+configuration file, then run `tailsql` without the `--local` flag.
+
+Note that the first time you start up a node, you may need to provide a key to
+authorize your node on the tailnet, e.g.:
+
+```shell
+# Get a key from https://login.tailscale.com/admin/settings/keys.
+# The first time you start the node, provide the key via the TS_AUTHKEY environment.
+TS_AUTHKEY=tskey-XXXX ./tailsql --config demo.conf
+
+# Note: Omit --local to start on Tailscale.
+```
+
+Subsequent runs can omit the key.
