@@ -5,92 +5,190 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"expvar"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	"github.com/creachadair/ctrl"
 	"github.com/tailscale/tailsql/server/tailsql"
+	"tailscale.com/tsnet"
 	"tailscale.com/tsweb"
+	"tailscale.com/types/logger"
 
 	// SQLite driver for database/sql.
 	_ "modernc.org/sqlite"
 )
 
 var (
-	port       = flag.Int("port", 8080, "Service port")
+	localPort  = flag.Int("local", 0, "Local service port")
 	configPath = flag.String("config", "", "Configuration file (HuJSON, required)")
+	doDebugLog = flag.Bool("debug", false, "Enable verbose debug logging")
 	initConfig = flag.String("init-config", "",
 		"Generate a basic configuration file in the given path and exit")
-
-	// TODO(creachadair): Allow starting on tsnet.
 )
+
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, `Usage: %[1]s [options] --config config.json
+       %[1]s --init-config demo.json
+
+Run a TailSQL service with the specified --config file.
+
+If --local > 0, the service is run on localhost at that port.
+Otherwise, the server starts a Tailscale node at the configured hostname.
+
+When run with --init-config set, %[1]s generates an example configuration file
+with defaults suitable for running a local service and then exits.
+
+Options:
+`, filepath.Base(os.Args[0]))
+		flag.PrintDefaults()
+	}
+}
 
 func main() {
 	flag.Parse()
+	ctrl.Run(func() error {
+		// Case 1: Generate a semple configuration file and exit.
+		if *initConfig != "" {
+			generateBasicConfig(*initConfig)
+			log.Printf("Generated sample config in %s", *initConfig)
+			return nil
+		} else if *configPath == "" {
+			ctrl.Fatalf("You must provide a non-empty --config path")
+		}
 
-	if *initConfig != "" {
-		generateBasicConfig(*initConfig)
-		log.Printf("Generated sample config in %s", *initConfig)
-		return
-	}
-	if *port <= 0 {
-		log.Fatal("You must provide a --port > 0")
-	} else if *configPath == "" {
-		log.Fatal("You must provide a --config path")
-	}
+		// For all the cases below, we need a valid configuration file.
+		data, err := os.ReadFile(*configPath)
+		if err != nil {
+			ctrl.Fatalf("Reading tailsql config: %v", err)
+		}
+		var opts tailsql.Options
+		if err := tailsql.UnmarshalOptions(data, &opts); err != nil {
+			ctrl.Fatalf("Parsing tailsql config: %v", err)
+		}
+		opts.Metrics = expvar.NewMap("tailsql")
 
-	data, err := os.ReadFile(*configPath)
-	if err != nil {
-		log.Fatalf("Reading tailsql config: %v", err)
-	}
+		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer cancel()
 
-	var opts tailsql.Options
-	if err := tailsql.UnmarshalOptions(data, &opts); err != nil {
-		log.Fatalf("Parsing tailsql config: %v", err)
-	}
+		// Case 2: Run unencrypted on a local port.
+		if *localPort > 0 {
+			return runLocalService(ctx, opts, *localPort)
+		}
 
+		// Case 3: Run on a tailscale node.
+		if opts.Hostname == "" {
+			ctrl.Fatalf("You must provide a non-empty Tailscale hostname")
+		}
+		logf := logger.Discard
+		if *doDebugLog {
+			logf = log.Printf
+		}
+		tsNode := &tsnet.Server{
+			Dir:      os.ExpandEnv(opts.StateDir),
+			Hostname: opts.Hostname,
+			Logf:     logf,
+		}
+		defer tsNode.Close()
+
+		log.Printf("Starting tailscale (hostname=%q)", opts.Hostname)
+		lc, err := tsNode.LocalClient()
+		if err != nil {
+			ctrl.Fatalf("Connect local client: %v", err)
+		}
+		opts.LocalClient = lc
+
+		if st, err := tsNode.Up(ctx); err != nil {
+			ctrl.Fatalf("Starting tailscale: %v", err)
+		} else {
+			log.Printf("Tailscale started, node state %q", st.BackendState)
+		}
+
+		tsql, err := tailsql.NewServer(opts)
+		if err != nil {
+			ctrl.Fatalf("Creating tailsql server: %v", err)
+		}
+
+		lst, err := tsNode.Listen("tcp", ":80")
+		if err != nil {
+			ctrl.Fatalf("Listen port 80: %v", err)
+		}
+
+		if opts.ServeHTTPS {
+			// When serving TLS, add a redirect from HTTP on port 80 to HTTPS on 443.
+			certDomains := tsNode.CertDomains()
+			if len(certDomains) == 0 {
+				ctrl.Fatalf("No cert domains available for HTTPS")
+			}
+			base := "https://" + certDomains[0]
+			go http.Serve(lst, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				target := base + r.RequestURI
+				http.Redirect(w, r, target, http.StatusPermanentRedirect)
+			}))
+			log.Printf("Redirecting HTTP to HTTPS at %q", base)
+
+			// For the real service, start a separate listener.
+			// Note: Replaces the port 80 listener.
+			var err error
+			lst, err = tsNode.ListenTLS("tcp", ":443")
+			if err != nil {
+				ctrl.Fatalf("Listen TLS: %v", err)
+			}
+			log.Print("Enabled serving via HTTPS")
+		}
+
+		mux := tsql.NewMux()
+		tsweb.Debugger(mux)
+		go http.Serve(lst, mux)
+		log.Printf("TailSQL started")
+		<-ctx.Done()
+		log.Print("TailSQL shutting down...")
+		return tsNode.Close()
+	})
+}
+
+func runLocalService(ctx context.Context, opts tailsql.Options, port int) error {
 	tsql, err := tailsql.NewServer(opts)
 	if err != nil {
-		log.Fatalf("Creating tailsql server: %v", err)
+		ctrl.Fatalf("Creating tailsql server: %v", err)
 	}
 
 	mux := tsql.NewMux()
 	tsweb.Debugger(mux)
-	if opts.Hostname == "" {
-		opts.Hostname = "localhost"
-	}
 	hsrv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", opts.Hostname, *port),
+		Addr:    fmt.Sprintf("localhost:%d", port),
 		Handler: mux,
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
 	go func() {
 		<-ctx.Done()
 		log.Print("Signal received, stopping")
 		hsrv.Shutdown(context.Background()) // ctx is already terminated
 		tsql.Close()
 	}()
-	log.Printf("Starting tailsql at http://%s", hsrv.Addr)
+	log.Printf("Starting local tailsql at http://%s", hsrv.Addr)
 	if err := hsrv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		log.Fatal(err)
+		ctrl.Fatalf(err.Error())
 	}
+	return nil
 }
 
 func generateBasicConfig(path string) {
 	f, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("Create config: %v", err)
+		ctrl.Fatalf("Create config: %v", err)
 	}
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	eerr := enc.Encode(tailsql.Options{
-		Hostname:    "localhost",
+		Hostname:    "tailsql-dev",
 		LocalState:  "tailsql-state.db",
 		LocalSource: "local",
 		Sources: []tailsql.DBSpec{{
@@ -104,11 +202,11 @@ func generateBasicConfig(path string) {
 		}},
 		UILinks: []tailsql.UILink{{
 			Anchor: "source",
-			URL:    "https://github.com/tailscale/tailsql/tree/main/tailsql",
+			URL:    "https://github.com/tailscale/tailsql",
 		}},
 	})
 	cerr := f.Close()
 	if err := errors.Join(eerr, cerr); err != nil {
-		log.Fatalf("Write config: %v", err)
+		ctrl.Fatalf("Write config: %v", err)
 	}
 }
