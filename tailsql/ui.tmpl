@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html><head>
+ <title>Tailscale SQL Playground</title>
+ <meta charset="utf-8" />
+ <link rel="stylesheet" type="text/css" href="/static/style.css" />
+</head><body>
+
+<div class="logo">
+  <img src="/static/logo.svg" width=64 height=64 />
+  <span>TailSQL</span>
+</div>{{with .Version}}
+<div class="version">
+  <span>Version: {{.}}</span>
+</div>{{end}}
+
+<div id="input">
+  <form id="qform" method="GET">
+    <textarea name="q" rows=10 cols=90 id="query">{{- .Query -}} </textarea>
+    <div class="action">
+      <span><button class="ctrl" title="query">Query</button></span>
+      <span><button class="ctrl" id="dl-button" title="download">Download as CSV</button></span>
+      <span><label>Source: <select id="sources" class="ctrl" name="src">{{range $s := .Sources}}
+        <option class="ctrl" value="{{$s.Source}}"{{if eq $.Source .Source}} selected{{end}}>{{$s.Label}}</option>
+      {{end}}</select></label></span>
+    </div>
+  </form>
+</div>
+{{with .Links}}<div class="meta">
+  <span class="label">Links:</span>{{range .}}
+  <span><a href="{{.URL}}" target="_blank">{{.Anchor}}</a></span>{{end}}
+</div>{{end}}
+
+{{with .Error}}
+<div id="error" class="output"><div class="error">
+  <span>Error:</span>
+  <span>{{.}}</span>
+</div></div>{{end -}}
+{{with .Output}}
+<hr />
+<div id="output" class="output">
+  <div class="details">
+    <span>Query time: {{.Elapsed}}</span>
+    <span>{{.NumRows}} rows{{if .More}} fetched (additional rows not loaded){{else}} total{{end}}</span>{{if .Trunc}}
+    <span>(display is truncated)</span>{{end}}
+  </div>
+<table>
+<tr>{{range .Columns}}
+  <th>{{.}}</th>{{end}}
+</tr>
+{{range .Rows -}}
+<tr>{{range .}}
+  <td>{{.}}</td>{{end}}
+</tr>{{end}}
+</table></div>
+{{end -}}
+
+</body>
+<script src="/static/script.js"></script>
+</html>

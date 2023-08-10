@@ -1,0 +1,37 @@
+// Test tailsql configuration file.
+{
+    "hostname": "tailsql-test",
+
+    // Database definitions.
+    "sources": [
+        {
+            "source": "test1",
+            "label": "Test DB 1",
+            "driver": "sqlite",
+            "url": "file::memory:"
+        },
+        {
+            "source": "test2",
+            "label": "Test DB 2",
+            "driver": "sqlite",
+            "keyFile": "testdata/fake-test.key",
+        },
+    ],
+
+    // Additional hyperlinks.
+    "links": [
+        {
+            "anchor": "foo",
+            "url": "http://foo",
+        },
+        {
+            "anchor": "bar",
+            "url": "http://bar",
+        },
+    ],
+
+    // Access control.
+    "access": {
+        "test1": ["admin@example.com"],
+    }
+}
