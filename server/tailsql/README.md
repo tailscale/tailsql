@@ -13,22 +13,22 @@ not already have one, you can create one using the test data for this package:
 
 ```shell
 # Creates test.db in the current working directory.
-sqlite3 test.db -init ./tailsql/testdata/init.sql .quit
+sqlite3 test.db -init ./server/tailsql/testdata/init.sql .quit
 ```
 
-Now build the `runlocal` tool, and create a HuJSON (JWCC) configuration file for it:
+Now build the `tailsql` tool, and create a HuJSON (JWCC) configuration file for it:
 
 ```shell
-go build ./cmd/runlocal
+go build ./cmd/tailsql
 
 # The --init-config flag generates a stub config pointing to "test.db".
-./runlocal --init-config demo.conf
+./tailsql --init-config demo.conf
 ```
 
 Feel free to edit this configuration file to suit your tastes, then run:
 
 ```shell
-./runlocal --config demo.conf
+./tailsql --config demo.conf
 ```
 
 This starts up the server on localhost. Visit the UI at http://localhost:8080,

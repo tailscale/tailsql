@@ -7,7 +7,7 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/tailscale/tailsql/tailsql"
+	"github.com/tailscale/tailsql/server/tailsql"
 )
 
 // An ordered list of rewrite rules for rendering text for the UI.
