@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/tailscale/tailsql/authorizer"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
 )
@@ -76,6 +77,7 @@ func TestOptions(t *testing.T) {
 	if diff := cmp.Diff(want, opts); diff != "" {
 		t.Errorf("Parsed options (-want, +got)\n%s", diff)
 	}
+	opts.Authorize = authorizer.PeerCaps(nil)
 
 	// Test that we can populate options from the config.
 	t.Run("Options", func(t *testing.T) {

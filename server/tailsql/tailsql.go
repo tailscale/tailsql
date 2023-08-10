@@ -52,7 +52,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -115,10 +114,6 @@ func NewServer(opts Options) (*Server, error) {
 	if opts.Metrics != nil {
 		addMetrics(opts.Metrics)
 	}
-	logf := opts.Logf
-	if logf == nil {
-		logf = log.Printf
-	}
 	return &Server{
 		lc:        opts.LocalClient,
 		state:     state,
@@ -127,7 +122,7 @@ func NewServer(opts Options) (*Server, error) {
 		rules:     opts.UIRewriteRules,
 		authorize: opts.authorize(),
 		qtimeout:  opts.QueryTimeout.Duration(),
-		logf:      logf,
+		logf:      opts.logf(),
 		dbs:       dbs,
 	}, nil
 }

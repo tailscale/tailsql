@@ -19,7 +19,6 @@ import (
 
 	"github.com/tailscale/hujson"
 	"tailscale.com/client/tailscale/apitype"
-	"tailscale.com/tailcfg"
 	"tailscale.com/types/logger"
 )
 
@@ -65,8 +64,8 @@ type Options struct {
 	// request giving the requested database src and the caller's WhoIs record.
 	// If it reports an error, the request is failed.
 	//
-	// If Authorize is nil and a LocalClient is available, a default rule is
-	// used that checks the caller's capabilities.
+	// If Authorize is nil and a LocalClient is available, the default rule is
+	// to accept any logged-in user, rejecting tagged nodes.
 	//
 	// If no LocalClient is available, this field is ignored, no authorization
 	// checks are performed, and all requests are accepted.
@@ -136,6 +135,13 @@ func (o Options) readOnlyLocalState() (*sql.DB, error) {
 	return sql.Open("sqlite", url)
 }
 
+func (o Options) logf() logger.Logf {
+	if o.Logf == nil {
+		return log.Printf
+	}
+	return o.Logf
+}
+
 const tailsqlCap = "https://tailscale.com/cap/tailsql"
 
 // authorize returns an authorization callback based on the Access field of o.
@@ -144,10 +150,7 @@ func (o Options) authorize() func(src string, who *apitype.WhoIsResponse) error 
 		return o.Authorize
 	}
 
-	logf := o.Logf
-	if logf == nil {
-		logf = log.Printf
-	}
+	logf := o.logf()
 	return func(dataSrc string, who *apitype.WhoIsResponse) (err error) {
 		caller := who.UserProfile.LoginName
 		if who.Node.IsTagged() {
@@ -156,21 +159,10 @@ func (o Options) authorize() func(src string, who *apitype.WhoIsResponse) error 
 		defer func() {
 			logf("[tailsql] auth src=%q who=%q err=%v", dataSrc, caller, err)
 		}()
-		type rule struct {
-			DataSrc []string `json:"src"`
+		if who.Node.IsTagged() {
+			return errors.New("tagged node is not authorized")
 		}
-		rules, err := tailcfg.UnmarshalCapJSON[rule](who.CapMap, tailsqlCap)
-		if err != nil || len(rules) == 0 {
-			return errors.New("not authorized for access tailsql")
-		}
-		for _, rule := range rules {
-			for _, s := range rule.DataSrc {
-				if s == "*" || s == dataSrc {
-					return nil
-				}
-			}
-		}
-		return fmt.Errorf("not authorized for access to %q", dataSrc)
+		return nil
 	}
 }
 
