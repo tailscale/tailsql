@@ -25,7 +25,8 @@ go build ./cmd/tailsql
 ./tailsql --init-config demo.conf
 ```
 
-Feel free to edit this configuration file to suit your tastes, then run:
+Feel free to edit this configuration file to suit your tastes. The file encodes
+an [Options](./server/tailsql/options.go#L27) value. Once you are satisfied, run:
 
 ```shell
 # The --local flag starts an HTTP server on localhost.
