@@ -60,9 +60,7 @@ func main() {
 	ctrl.Run(func() error {
 		// Case 1: Generate a semple configuration file and exit.
 		if *initConfig != "" {
-			generateBasicConfig(*initConfig)
-			log.Printf("Generated sample config in %s", *initConfig)
-			return nil
+			return generateBasicConfig(*initConfig)
 		} else if *configPath == "" {
 			ctrl.Fatalf("You must provide a non-empty --config path")
 		}
@@ -90,70 +88,7 @@ func main() {
 		if opts.Hostname == "" {
 			ctrl.Fatalf("You must provide a non-empty Tailscale hostname")
 		}
-		logf := logger.Discard
-		if *doDebugLog {
-			logf = log.Printf
-		}
-		tsNode := &tsnet.Server{
-			Dir:      os.ExpandEnv(opts.StateDir),
-			Hostname: opts.Hostname,
-			Logf:     logf,
-		}
-		defer tsNode.Close()
-
-		log.Printf("Starting tailscale (hostname=%q)", opts.Hostname)
-		lc, err := tsNode.LocalClient()
-		if err != nil {
-			ctrl.Fatalf("Connect local client: %v", err)
-		}
-		opts.LocalClient = lc
-
-		if st, err := tsNode.Up(ctx); err != nil {
-			ctrl.Fatalf("Starting tailscale: %v", err)
-		} else {
-			log.Printf("Tailscale started, node state %q", st.BackendState)
-		}
-
-		tsql, err := tailsql.NewServer(opts)
-		if err != nil {
-			ctrl.Fatalf("Creating tailsql server: %v", err)
-		}
-
-		lst, err := tsNode.Listen("tcp", ":80")
-		if err != nil {
-			ctrl.Fatalf("Listen port 80: %v", err)
-		}
-
-		if opts.ServeHTTPS {
-			// When serving TLS, add a redirect from HTTP on port 80 to HTTPS on 443.
-			certDomains := tsNode.CertDomains()
-			if len(certDomains) == 0 {
-				ctrl.Fatalf("No cert domains available for HTTPS")
-			}
-			base := "https://" + certDomains[0]
-			go http.Serve(lst, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				target := base + r.RequestURI
-				http.Redirect(w, r, target, http.StatusPermanentRedirect)
-			}))
-			log.Printf("Redirecting HTTP to HTTPS at %q", base)
-
-			// For the real service, start a separate listener.
-			// Note: Replaces the port 80 listener.
-			var err error
-			lst, err = tsNode.ListenTLS("tcp", ":443")
-			if err != nil {
-				ctrl.Fatalf("Listen TLS: %v", err)
-			}
-			log.Print("Enabled serving via HTTPS")
-		}
-
-		mux := tsql.NewMux()
-		tsweb.Debugger(mux)
-		go http.Serve(lst, mux)
-		log.Printf("TailSQL started")
-		<-ctx.Done()
-		log.Print("TailSQL shutting down...")
-		return tsNode.Close()
+		return runTailscaleService(ctx, opts)
 	})
 }
 
@@ -183,7 +118,77 @@ func runLocalService(ctx context.Context, opts tailsql.Options, port int) error 
 	return nil
 }
 
-func generateBasicConfig(path string) {
+func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
+	tsNode := &tsnet.Server{
+		Dir:      os.ExpandEnv(opts.StateDir),
+		Hostname: opts.Hostname,
+		Logf:     logger.Discard,
+	}
+	if *doDebugLog {
+		tsNode.Logf = log.Printf
+	}
+	defer tsNode.Close()
+
+	log.Printf("Starting tailscale (hostname=%q)", opts.Hostname)
+	lc, err := tsNode.LocalClient()
+	if err != nil {
+		ctrl.Fatalf("Connect local client: %v", err)
+	}
+	opts.LocalClient = lc // for authentication
+
+	// Make sure the Tailscale node starts up. It might not, if it is a new node
+	// and the user did not provide an auth key.
+	if st, err := tsNode.Up(ctx); err != nil {
+		ctrl.Fatalf("Starting tailscale: %v", err)
+	} else {
+		log.Printf("Tailscale started, node state %q", st.BackendState)
+	}
+
+	// Reaching here, we have a running Tailscale node, now we can set up the
+	// HTTP and/or HTTPS plumbing for TailSQL itself.
+	tsql, err := tailsql.NewServer(opts)
+	if err != nil {
+		ctrl.Fatalf("Creating tailsql server: %v", err)
+	}
+
+	lst, err := tsNode.Listen("tcp", ":80")
+	if err != nil {
+		ctrl.Fatalf("Listen port 80: %v", err)
+	}
+
+	if opts.ServeHTTPS {
+		// When serving TLS, add a redirect from HTTP on port 80 to HTTPS on 443.
+		certDomains := tsNode.CertDomains()
+		if len(certDomains) == 0 {
+			ctrl.Fatalf("No cert domains available for HTTPS")
+		}
+		base := "https://" + certDomains[0]
+		go http.Serve(lst, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			target := base + r.RequestURI
+			http.Redirect(w, r, target, http.StatusPermanentRedirect)
+		}))
+		log.Printf("Redirecting HTTP to HTTPS at %q", base)
+
+		// For the real service, start a separate listener.
+		// Note: Replaces the port 80 listener.
+		var err error
+		lst, err = tsNode.ListenTLS("tcp", ":443")
+		if err != nil {
+			ctrl.Fatalf("Listen TLS: %v", err)
+		}
+		log.Print("Enabled serving via HTTPS")
+	}
+
+	mux := tsql.NewMux()
+	tsweb.Debugger(mux)
+	go http.Serve(lst, mux)
+	log.Printf("TailSQL started")
+	<-ctx.Done()
+	log.Print("TailSQL shutting down...")
+	return tsNode.Close()
+}
+
+func generateBasicConfig(path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		ctrl.Fatalf("Create config: %v", err)
@@ -212,4 +217,6 @@ func generateBasicConfig(path string) {
 	if err := errors.Join(eerr, cerr); err != nil {
 		ctrl.Fatalf("Write config: %v", err)
 	}
+	log.Printf("Generated sample config in %s", path)
+	return nil
 }
