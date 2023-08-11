@@ -90,7 +90,7 @@ const noBrowsersValue = "1"
 // siteAccessCookie is a cookie that must be presented with any request from a
 // browser that includes a query, and does not have the noBrowsersHeader.
 var siteAccessCookie = &http.Cookie{
-	Name: "tailsqlQuery", Value: "1", SameSite: http.SameSiteStrictMode,
+	Name: "tailsqlQuery", Value: "1", SameSite: http.SameSiteStrictMode, HttpOnly: true,
 }
 
 func requestHasSiteAccess(r *http.Request) bool {
@@ -244,7 +244,10 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		code := errorCode(err)
-		if code >= 400 && code < 500 {
+		if code == http.StatusFound {
+			http.Redirect(w, r, r.URL.String(), code)
+			return
+		} else if code >= 400 && code < 500 {
 			badRequestErrorCount.Add(1)
 		} else {
 			internalErrorCount.Add(1)
@@ -260,7 +263,7 @@ func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller,
 
 	// If a non-empty query is present, require a site access cookie.
 	if query != "" && !requestHasSiteAccess(r) {
-		return statusErrorf(http.StatusForbidden, "access cookie not found (please refresh)")
+		return statusErrorf(http.StatusFound, "access cookie not found (redirecting)")
 	}
 
 	w.Header().Set("Content-Type", "text/html")
