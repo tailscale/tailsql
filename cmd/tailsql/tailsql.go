@@ -20,6 +20,7 @@ import (
 
 	"github.com/creachadair/ctrl"
 	"github.com/tailscale/tailsql/server/tailsql"
+	"github.com/tailscale/tailsql/uirules"
 	"tailscale.com/tsnet"
 	"tailscale.com/tsweb"
 	"tailscale.com/types/logger"
@@ -78,6 +79,10 @@ func main() {
 			ctrl.Fatalf("Parsing tailsql config: %v", err)
 		}
 		opts.Metrics = expvar.NewMap("tailsql")
+		opts.UIRewriteRules = []tailsql.UIRewriteRule{
+			uirules.FormatSQLSource,
+			uirules.FormatJSONText,
+		}
 
 		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 		defer cancel()
