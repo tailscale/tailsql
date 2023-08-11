@@ -35,7 +35,7 @@ import (
 var (
 	localPort  = flag.Int("local", 0, "Local service port")
 	configPath = flag.String("config", "", "Configuration file (HuJSON, required)")
-	doDebugLog = flag.Bool("debug", false, "Enable verbose debug logging")
+	doDebugLog = flag.Bool("debug", false, "Enable very verbose tsnet debug logging")
 	initConfig = flag.String("init-config", "",
 		"Generate a basic configuration file in the given path and exit")
 )
