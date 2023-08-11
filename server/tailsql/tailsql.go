@@ -29,6 +29,16 @@
 //
 //   - "/meta" serves a JSON blob of metadata about available data sources.
 //
+// Calls to the /json endpoint must set the Sec-Tailsql header to "1". This
+// prevents browser scripts from directing queries to this endpoint.
+//
+// Calls to /csv must either set Sec-Tailsql to "1" or include a tailsqlQuery=1
+// same-site cookie.
+//
+// Calls to the UI with a non-empty query must include the tailsqlQuery=1
+// same-site cookie, which is set when the UI first loads. This averts simple
+// cross-site redirection tricks.
+//
 // # Named Queries
 //
 // The query processor treats a query of the form "named:<string>" as a named
@@ -70,6 +80,23 @@ var uiTemplate string
 var staticFS embed.FS
 
 var ui = template.Must(template.New("sql").Parse(uiTemplate))
+
+// noBrowsersHeader is a header that must be set in requests to the API
+// endpoints that are intended to be accessed not from browsers.  If this
+// header is not set to the value "1", those requests will fail.
+const noBrowsersHeader = "Sec-Tailsql"
+const noBrowsersValue = "1"
+
+// siteAccessCookie is a cookie that must be presented with any request from a
+// browser that includes a query, and does not have the noBrowsersHeader.
+var siteAccessCookie = &http.Cookie{
+	Name: "tailsqlQuery", Value: "1", SameSite: http.SameSiteStrictMode,
+}
+
+func requestHasSiteAccess(r *http.Request) bool {
+	c, err := r.Cookie(siteAccessCookie.Name)
+	return err == nil && c.Value == siteAccessCookie.Value
+}
 
 // Server is a server for the tailsql API.
 type Server struct {
@@ -229,6 +256,13 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 
 // serveUIInternal handles the root GET "/" route.
 func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
+	http.SetCookie(w, siteAccessCookie)
+
+	// If a non-empty query is present, require a site access cookie.
+	if query != "" && !requestHasSiteAccess(r) {
+		return statusErrorf(http.StatusForbidden, "access cookie not found (please refresh)")
+	}
+
 	w.Header().Set("Content-Type", "text/html")
 	data := &uiData{
 		Query:   query,
@@ -263,6 +297,12 @@ func (s *Server) serveCSVInternal(w http.ResponseWriter, r *http.Request, caller
 	if query == "" {
 		return statusErrorf(http.StatusBadRequest, "no query provided")
 	}
+
+	// We require either that a site access cookie is present, or a no-browsers header.
+	if r.Header.Get(noBrowsersHeader) != noBrowsersValue && !requestHasSiteAccess(r) {
+		return statusErrorf(http.StatusForbidden, "access denied")
+	}
+
 	out, err := s.queryContext(r.Context(), caller, src, query)
 	if errors.Is(err, errTooManyRows) {
 		// fall through to serve what we got
@@ -284,6 +324,10 @@ func (s *Server) serveJSONInternal(w http.ResponseWriter, r *http.Request, calle
 	if query == "" {
 		return statusErrorf(http.StatusBadRequest, "no query provided")
 	}
+	if r.Header.Get(noBrowsersHeader) != noBrowsersValue {
+		return statusErrorf(http.StatusForbidden, "access denied")
+	}
+
 	out, err := s.queryContextJSON(r.Context(), caller, src, query)
 	if err != nil {
 		queryErrorCount.Add(1)
