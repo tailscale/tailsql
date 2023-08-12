@@ -206,7 +206,7 @@ func generateBasicConfig(path string) error {
 	eerr := enc.Encode(tailsql.Options{
 		Hostname:    "tailsql-dev",
 		LocalState:  "tailsql-state.db",
-		LocalSource: "local",
+		LocalSource: "self",
 		Sources: []tailsql.DBSpec{{
 			Source: "main",
 			Label:  "Test database",
@@ -217,7 +217,7 @@ func generateBasicConfig(path string) error {
 			},
 		}},
 		UILinks: []tailsql.UILink{{
-			Anchor: "source",
+			Anchor: "source code",
 			URL:    "https://github.com/tailscale/tailsql",
 		}},
 	})
