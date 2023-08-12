@@ -37,14 +37,16 @@ This starts up the server on localhost. Visit the UI at http://localhost:8080,
 or call it from the command-line using `curl`:
 
 ```shell
+# Note that you must provide a Sec-Tailsql header with API calls.
+
 # Fetch output as comma-separated values.
-curl -s http://localhost:8080/csv --url-query 'q=select * from users'
+curl -s -H 'sec-tailsql: 1' http://localhost:8080/csv --url-query 'q=select * from users'
 
 # Fetch output as JSON objects.
-curl -s http://localhost:8080/json --url-query 'q=select location, count(*) n from users where location is not null group by location order by n desc'
+curl -s -H 'sec-tailsql: 1' http://localhost:8080/json --url-query 'q=select location, count(*) n from users where location is not null group by location order by n desc'
 
 # Check the query log.
-curl -s http://localhost:8080/json --url-query 'q=select * from query_log' --url-query src=local
+curl -s -H 'sec-tailsql: 1' http://localhost:8080/json --url-query 'q=select * from query_log' --url-query src=local
 ```
 
 ## Running on Tailscale
