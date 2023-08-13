@@ -83,19 +83,22 @@ var ui = template.Must(template.New("sql").Parse(uiTemplate))
 
 // noBrowsersHeader is a header that must be set in requests to the API
 // endpoints that are intended to be accessed not from browsers.  If this
-// header is not set to the value "1", those requests will fail.
+// header is not set to a non-empty value, those requests will fail.
 const noBrowsersHeader = "Sec-Tailsql"
-const noBrowsersValue = "1"
 
 // siteAccessCookie is a cookie that must be presented with any request from a
 // browser that includes a query, and does not have the noBrowsersHeader.
 var siteAccessCookie = &http.Cookie{
-	Name: "tailsqlQuery", Value: "1", SameSite: http.SameSiteStrictMode, HttpOnly: true,
+	Name: "tailsqlQuery", Value: "1", SameSite: http.SameSiteLaxMode, HttpOnly: true,
 }
 
 func requestHasSiteAccess(r *http.Request) bool {
 	c, err := r.Cookie(siteAccessCookie.Name)
 	return err == nil && c.Value == siteAccessCookie.Value
+}
+
+func requestHasSecureHeader(r *http.Request) bool {
+	return r.Header.Get(noBrowsersHeader) != ""
 }
 
 // Server is a server for the tailsql API.
@@ -270,8 +273,9 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
 	http.SetCookie(w, siteAccessCookie)
 
-	// If a non-empty query is present, require a site access cookie.
-	if query != "" && !requestHasSiteAccess(r) {
+	// If a non-empty query is present, require either a site access cookie or a
+	// no-browsers header.
+	if query != "" && !requestHasSecureHeader(r) && !requestHasSiteAccess(r) {
 		return statusErrorf(http.StatusFound, "access cookie not found (redirecting)")
 	}
 
@@ -310,9 +314,9 @@ func (s *Server) serveCSVInternal(w http.ResponseWriter, r *http.Request, caller
 		return statusErrorf(http.StatusBadRequest, "no query provided")
 	}
 
-	// We require either that a site access cookie is present, or a no-browsers header.
-	if r.Header.Get(noBrowsersHeader) != noBrowsersValue && !requestHasSiteAccess(r) {
-		return statusErrorf(http.StatusForbidden, "access denied")
+	// Require either a site access cookie or a no-browsers header.
+	if !requestHasSecureHeader(r) && !requestHasSiteAccess(r) {
+		return statusErrorf(http.StatusForbidden, "query access denied")
 	}
 
 	out, err := s.queryContext(r.Context(), caller, src, query)
@@ -336,8 +340,8 @@ func (s *Server) serveJSONInternal(w http.ResponseWriter, r *http.Request, calle
 	if query == "" {
 		return statusErrorf(http.StatusBadRequest, "no query provided")
 	}
-	if r.Header.Get(noBrowsersHeader) != noBrowsersValue {
-		return statusErrorf(http.StatusForbidden, "access denied")
+	if !requestHasSecureHeader(r) {
+		return statusErrorf(http.StatusForbidden, "query access denied")
 	}
 
 	out, err := s.queryContextJSON(r.Context(), caller, src, query)
