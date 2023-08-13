@@ -48,18 +48,36 @@ func mustInitSQLite(t *testing.T) *sql.DB {
 	return db
 }
 
-func mustGet(t *testing.T, cli *http.Client, url string, headers ...string) []byte {
+func mustGetRequest(t *testing.T, url string, headers ...string) *http.Request {
+	t.Helper()
 	if len(headers)%2 != 0 {
 		t.Fatal("Invalid header list")
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		t.Fatalf("NewRequest: %v", err)
+		t.Fatalf("NewRequest %q: %v", url, err)
 	}
-	req.AddCookie(&http.Cookie{Name: "tailsqlQuery", Value: "1"})
 	for i := 0; i+1 < len(headers); i += 2 {
 		req.Header.Set(headers[i], headers[i+1])
 	}
+	return req
+}
+
+func mustGetFail(t *testing.T, cli *http.Client, url string, want int, headers ...string) {
+	t.Helper()
+	req := mustGetRequest(t, url, headers...)
+	rsp, err := cli.Do(req)
+	if err != nil {
+		t.Fatalf("Get %q: unexpected error: %v", url, err)
+	} else if got := rsp.StatusCode; got != want {
+		t.Fatalf("Get %q: got status %v, want %v", url, got, want)
+	}
+}
+
+func mustGet(t *testing.T, cli *http.Client, url string, headers ...string) []byte {
+	t.Helper()
+	req := mustGetRequest(t, url, headers...)
+	req.AddCookie(&http.Cookie{Name: "tailsqlQuery", Value: "1"})
 	rsp, err := cli.Do(req)
 	if err != nil {
 		t.Fatalf("Get %q failed: %v", url, err)
@@ -200,12 +218,7 @@ func TestServer(t *testing.T) {
 		q := url.Values{"q": {"select * from whatever"}}
 		url := htest.URL + "/json?" + q.Encode()
 
-		rsp, err := cli.Get(url) // no forbidden header
-		if err != nil {
-			t.Fatalf("Get %q failed: %v", url, err)
-		} else if got, want := rsp.StatusCode, http.StatusForbidden; got != want {
-			t.Errorf("Get %q: got status %v, want %v", url, got, want)
-		}
+		mustGetFail(t, cli, url, http.StatusForbidden) // no forbidden header
 	})
 
 	t.Run("CSV", func(t *testing.T) {
@@ -224,12 +237,7 @@ func TestServer(t *testing.T) {
 		q := url.Values{"q": {"select * from whatever"}}
 		url := htest.URL + "/csv?" + q.Encode()
 
-		rsp, err := cli.Get(url) // no forbidden header
-		if err != nil {
-			t.Fatalf("Get %q failed: %v", url, err)
-		} else if got, want := rsp.StatusCode, http.StatusForbidden; got != want {
-			t.Errorf("Get %q: got status %v, want %v", url, got, want)
-		}
+		mustGetFail(t, cli, url, http.StatusForbidden) // no forbidden header
 	})
 
 	t.Run("Named", func(t *testing.T) {
@@ -249,6 +257,13 @@ func TestServer(t *testing.T) {
 		if !strings.Contains(got, wantError) {
 			t.Errorf("Missing result substring %q:\n%s", wantError, got)
 		}
+	})
+
+	t.Run("OverLongQuery", func(t *testing.T) {
+		q := url.Values{"q": {fmt.Sprintf("select '%s';", strings.Repeat("f", 4000))}}
+		url := htest.URL + "/csv?" + q.Encode()
+
+		mustGetFail(t, cli, url, http.StatusBadRequest, "sec-tailsql", "1") // query too long
 	})
 }
 

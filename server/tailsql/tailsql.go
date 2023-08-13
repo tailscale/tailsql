@@ -216,13 +216,22 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 			src = dbs[0].Source() // default to the first source
 		}
 	}
+
+	// Reject query strings that are egregiously too long.
+	const maxQueryBytes = 4000
+
+	query := strings.TrimSpace(r.FormValue("q"))
+	if len(query) > maxQueryBytes {
+		http.Error(w, "query too long", http.StatusBadRequest)
+		return
+	}
+
 	caller, isAuthorized := s.checkAuth(w, r, src)
 	if !isAuthorized {
 		authErrorCount.Add(1)
 		return
 	}
 
-	query := strings.TrimSpace(r.FormValue("q"))
 	var err error
 	switch r.URL.Path {
 	case "/":
