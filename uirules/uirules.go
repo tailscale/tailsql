@@ -40,7 +40,8 @@ var StripeIDLink = tailsql.UIRewriteRule{
 var FormatSQLSource = tailsql.UIRewriteRule{
 	Value: regexp.MustCompile(`(?is)\b(select\s+.*from|create\s+(table|view))\b`),
 	Apply: func(col, s string, _ []string) any {
-		return template.HTML(fmt.Sprintf(`<code><pre>%s</pre></code>`, s))
+		esc := template.HTMLEscapeString(s)
+		return template.HTML(fmt.Sprintf(`<code><pre>%s</pre></code>`, esc))
 	},
 }
 
