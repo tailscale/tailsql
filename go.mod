@@ -9,7 +9,7 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	modernc.org/sqlite v1.25.0
-	tailscale.com v1.1.1-0.20230812014940-9e24a6508aa3
+	tailscale.com v1.1.1-0.20230812230958-239899380412
 )
 
 require (
