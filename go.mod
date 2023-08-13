@@ -7,6 +7,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/klauspost/compress v1.16.7
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
+	github.com/tailscale/setec v0.0.0-20230814184909-2dc1e0e620ea
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	modernc.org/sqlite v1.25.0
 	tailscale.com v1.1.1-0.20230812230958-239899380412
@@ -72,6 +73,7 @@ require (
 	github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85 // indirect
 	github.com/tailscale/wireguard-go v0.0.0-20230710185534-bb2c8f22eccf // indirect
 	github.com/tcnksm/go-httpstat v0.2.0 // indirect
+	github.com/tink-crypto/tink-go/v2 v2.0.0 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
 	github.com/vishvananda/netlink v1.2.1-beta.2 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect

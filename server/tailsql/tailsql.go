@@ -118,7 +118,17 @@ type Server struct {
 
 // NewServer constructs a new server with the given Options.
 func NewServer(opts Options) (*Server, error) {
-	dbs, err := opts.sources()
+	// Check the validity of the sources, and get any secret names they require
+	// from the secrets service. If there are any, we also require that a
+	// secrets service URL is configured.
+	sec, err := opts.CheckSources()
+	if err != nil {
+		return nil, fmt.Errorf("checking sources: %w", err)
+	} else if len(sec) != 0 && opts.SecretStore == nil {
+		return nil, fmt.Errorf("have %d named secrets but no secret store", len(sec))
+	}
+
+	dbs, err := opts.openSources(opts.SecretStore)
 	if err != nil {
 		return nil, fmt.Errorf("opening sources: %w", err)
 	}

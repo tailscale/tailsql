@@ -204,10 +204,14 @@ github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a h1:SJy1Pu0eH1C29X
 github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a/go.mod h1:DFSS3NAGHthKo1gTlmEcSBiZrRJXi28rLNd/1udP1c8=
 github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85 h1:zrsUcqrG2uQSPhaUPjUQwozcRdDdSxxqhNgNZ3drZFk=
 github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85/go.mod h1:NzVQi3Mleb+qzq8VmcWpSkcSYxXIg0DkI6XDzpVkhJ0=
+github.com/tailscale/setec v0.0.0-20230814184909-2dc1e0e620ea h1:mo0toDwzCNYTVuWPmDQyr/LOOFD2dT8CCNcEIYJx9es=
+github.com/tailscale/setec v0.0.0-20230814184909-2dc1e0e620ea/go.mod h1:h9qIJN6MO8aKu+YGgjRFmuMQDld312U6POnzLLjqXA8=
 github.com/tailscale/wireguard-go v0.0.0-20230710185534-bb2c8f22eccf h1:bHQHwIHId353jAF2Lm0cGDjJpse/PYS0I0DTtihL9Ls=
 github.com/tailscale/wireguard-go v0.0.0-20230710185534-bb2c8f22eccf/go.mod h1:QRIcq2+DbdIC5sKh/gcAZhuqu6WT6L6G8/ALPN5wqYw=
 github.com/tcnksm/go-httpstat v0.2.0 h1:rP7T5e5U2HfmOBmZzGgGZjBQ5/GluWUylujl0tJ04I0=
 github.com/tcnksm/go-httpstat v0.2.0/go.mod h1:s3JVJFtQxtBEBC9dwcdTTXS9xFnM3SXAZwPG41aurT8=
+github.com/tink-crypto/tink-go/v2 v2.0.0 h1:LutFJapahsM0i/6hKfOkzSYTVeshmFs+jloZXqe9z9s=
+github.com/tink-crypto/tink-go/v2 v2.0.0/go.mod h1:QAbyq9LZncomYnScxlfaHImbV4ieNIe6bnu/Xcqqox4=
 github.com/u-root/u-root v0.11.0 h1:6gCZLOeRyevw7gbTwMj3fKxnr9+yHFlgF3N7udUVNO8=
 github.com/u-root/u-root v0.11.0/go.mod h1:DBkDtiZyONk9hzVEdB/PWI9B4TxDkElWlVTHseglrZY=
 github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 h1:YcojQL98T/OO+rybuzn2+5KrD5dBwXIvYBvQ2cD3Avg=
