@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	setecclient "github.com/tailscale/setec/client/setec"
+	"github.com/tailscale/setec/client/setec"
 	"github.com/tailscale/setec/setectest"
 	"github.com/tailscale/tailsql/authorizer"
 	"github.com/tailscale/tailsql/server/tailsql"
@@ -141,8 +141,8 @@ func TestSecrets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Invalid sources: %v", err)
 	}
-	st, err := setecclient.NewStore(context.Background(), setecclient.StoreConfig{
-		Client:  setecclient.Client{Server: hs.URL},
+	st, err := setec.NewStore(context.Background(), setec.StoreConfig{
+		Client:  setec.Client{Server: hs.URL},
 		Secrets: secrets,
 	})
 	if err != nil {
