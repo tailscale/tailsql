@@ -81,7 +81,7 @@ func TestOptions(t *testing.T) {
 
 	// Test that we can populate options from the config.
 	t.Run("Options", func(t *testing.T) {
-		dbs, err := opts.sources()
+		dbs, err := opts.openSources(nil)
 		if err != nil {
 			t.Fatalf("Options: unexpected error: %v", err)
 		}

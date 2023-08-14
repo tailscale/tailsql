@@ -15,10 +15,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/tailscale/setec/client/setec"
+	"github.com/tailscale/setec/setectest"
 	"github.com/tailscale/tailsql/authorizer"
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
@@ -34,9 +37,10 @@ import (
 //go:embed testdata/init.sql
 var initSQL string
 
-func mustInitSQLite(t *testing.T) *sql.DB {
+func mustInitSQLite(t *testing.T) (url string, _ *sql.DB) {
 	t.Helper()
-	db, err := sql.Open("sqlite", "file::memory:")
+	url = "file:" + filepath.Join(t.TempDir(), "test.db")
+	db, err := sql.Open("sqlite", url)
 	if err != nil {
 		t.Fatalf("Open memory db: %v", err)
 	}
@@ -45,7 +49,7 @@ func mustInitSQLite(t *testing.T) *sql.DB {
 	if _, err := db.Exec(initSQL); err != nil {
 		t.Fatalf("Initialize database: %v", err)
 	}
-	return db
+	return url, db
 }
 
 func mustGetRequest(t *testing.T, url string, headers ...string) *http.Request {
@@ -116,8 +120,46 @@ var testUIRules = []tailsql.UIRewriteRule{
 	uirules.FormatJSONText,
 }
 
+func TestSecrets(t *testing.T) {
+	const secretName = "connection-string"
+	url, _ := mustInitSQLite(t)
+	db := setectest.NewDB(t, nil)
+	db.MustPut(db.Superuser, secretName, url)
+
+	ss := setectest.NewServer(t, db, nil)
+	hs := httptest.NewServer(ss.Mux)
+	defer hs.Close()
+
+	opts := tailsql.Options{
+		Sources: []tailsql.DBSpec{{
+			Source: "test",
+			Label:  "Test Database",
+			Driver: "sqlite",
+			Secret: secretName,
+		}},
+	}
+	secrets, err := opts.CheckSources()
+	if err != nil {
+		t.Fatalf("Invalid sources: %v", err)
+	}
+	st, err := setec.NewStore(context.Background(), setec.StoreConfig{
+		Client:  setec.Client{Server: hs.URL},
+		Secrets: secrets,
+	})
+	if err != nil {
+		t.Fatalf("Creating setec store: %v", err)
+	}
+	opts.SecretStore = st
+
+	ts, err := tailsql.NewServer(opts)
+	if err != nil {
+		t.Fatalf("Creating tailsql server: %v", err)
+	}
+	ts.Close()
+}
+
 func TestServer(t *testing.T) {
-	db := mustInitSQLite(t)
+	_, db := mustInitSQLite(t)
 
 	const testLabel = "hapax legomenon"
 	const testAnchor = "wizboggle-gobsprocket"
@@ -303,7 +345,7 @@ func TestAuth(t *testing.T) {
 		}
 	)
 
-	db := mustInitSQLite(t)
+	_, db := mustInitSQLite(t)
 
 	// An initially-empty fake client, which we will update between tests.
 	fc := new(fakeClient)

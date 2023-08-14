@@ -13,11 +13,11 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/tailscale/hujson"
+	"github.com/tailscale/setec/client/setec"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/types/logger"
 )
@@ -71,6 +71,10 @@ type Options struct {
 	// checks are performed, and all requests are accepted.
 	Authorize func(src string, info *apitype.WhoIsResponse) error `json:"-"`
 
+	// If non-nil, use this store to fetch secret values. This is required if
+	// any of the sources specifies a named secret for its connection string.
+	SecretStore *setec.Store
+
 	// Optional rules to apply when rendering text for presentation in the UI.
 	// After generating the value string, each rule is matched in order, and the
 	// first match (if any) is applied to rewrite the output. The value returned
@@ -81,26 +85,43 @@ type Options struct {
 	Logf logger.Logf `json:"-"`
 }
 
-// Construct database handles to serve queries from. This returns nil without
-// error if no sources are defined.
-func (o Options) sources() ([]*dbHandle, error) {
+// openSources opens database handles to each of the sources defined by o.
+// Sources that require secrets will get them from store.
+// Precondition: All the sources of o have already been validated.
+func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 	if len(o.Sources) == 0 {
 		return nil, nil
 	}
+
 	srcs := make([]*dbHandle, len(o.Sources))
 	for i, spec := range o.Sources {
-		if err := spec.checkValid(); err != nil {
-			return nil, err
-		} else if spec.Label == "" {
+		if spec.Label == "" {
 			spec.Label = "(unidentified database)"
 		}
 
-		db, err := sql.Open(spec.Driver, spec.URL)
+		// Resolve the connection string.
+		var connString string
+		switch {
+		case spec.URL != "":
+			connString = spec.URL
+		case spec.KeyFile != "":
+			data, err := os.ReadFile(os.ExpandEnv(spec.KeyFile))
+			if err != nil {
+				return nil, fmt.Errorf("read key file for %q: %w", spec.Source, err)
+			}
+			connString = string(data)
+		case spec.Secret != "":
+			connString = string(store.Secret(spec.Secret).Get())
+		default:
+			panic("unexpected: no connection source is defined after validation")
+		}
+
+		db, err := sql.Open(spec.Driver, connString)
 		if err != nil {
-			return nil, fmt.Errorf("open %s %q: %w", spec.Driver, spec.URL, err)
+			return nil, fmt.Errorf("open %s %q: %w", spec.Driver, connString, err)
 		} else if err := db.PingContext(context.Background()); err != nil {
 			db.Close()
-			return nil, fmt.Errorf("ping %s %q: %w", spec.Driver, spec.URL, err)
+			return nil, fmt.Errorf("ping %s %q: %w", spec.Driver, connString, err)
 		}
 		srcs[i] = &dbHandle{
 			src:   spec.Source,
@@ -110,6 +131,21 @@ func (o Options) sources() ([]*dbHandle, error) {
 		}
 	}
 	return srcs, nil
+}
+
+// CheckSources validates the sources of o. If this succeeds, it also returns a
+// slice of any secret names required by the specified sources, if any.
+func (o Options) CheckSources() ([]string, error) {
+	var secrets []string
+	for i := range o.Sources {
+		if err := o.Sources[i].checkValid(); err != nil {
+			return nil, err
+		}
+		if s := o.Sources[i].Secret; s != "" {
+			secrets = append(secrets, s)
+		}
+	}
+	return secrets, nil
 }
 
 func (o Options) localState() (*localState, error) {
@@ -368,12 +404,28 @@ type DBSpec struct {
 	Named map[string]string `json:"named,omitempty"`
 
 	// Exactly one of the following fields must be set.
-	// If URL is set, it is used directly; otherwise KeyFile names the location
-	// of a file from which the connection string is read.
-	// The KeyFile, if set, will be expanded by os.ExpandEnv.
+	//
+	// If URL is set, it is used directly as the connection string.
+	//
+	// If KeyFile is set, it names the location of a file containing the
+	// connection string.  If set, KeyFile is expanded by os.ExpandEnv.
+	//
+	// Otherwise, Secret is the name of a secret to fetch from the secrets
+	// service, whose value is the connection string. This requires that a
+	// secrets server be configured in the options.
 
 	URL     string `json:"url,omitempty"`     // path or connection URL
 	KeyFile string `json:"keyFile,omitempty"` // path to key file
+	Secret  string `json:"secret,omitempty"`  // name of secret
+}
+
+func (d *DBSpec) countFields() (n int) {
+	for _, s := range []string{d.URL, d.KeyFile, d.Secret} {
+		if s != "" {
+			n++
+		}
+	}
+	return
 }
 
 func (d *DBSpec) checkValid() error {
@@ -382,17 +434,8 @@ func (d *DBSpec) checkValid() error {
 		return errors.New("missing source")
 	case d.Driver == "":
 		return errors.New("missing driver name")
-	case d.URL == "" && d.KeyFile == "":
-		return errors.New("no URL or key file")
-	case d.URL != "" && d.KeyFile != "":
-		return errors.New("both URL and a key file are set")
-	}
-	if d.KeyFile != "" {
-		key, err := os.ReadFile(os.ExpandEnv(d.KeyFile))
-		if err != nil {
-			return fmt.Errorf("read key file: %w", err)
-		}
-		d.URL = strings.TrimSpace(string(key))
+	case d.countFields() != 1:
+		return errors.New("exactly one connection source must be set")
 	}
 	return nil
 }
