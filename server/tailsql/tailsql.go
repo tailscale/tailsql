@@ -92,6 +92,10 @@ var siteAccessCookie = &http.Cookie{
 	Name: "tailsqlQuery", Value: "1", SameSite: http.SameSiteLaxMode, HttpOnly: true,
 }
 
+// contentSecurityPolicy is the CSP value sent for all requests to the UI.
+// Adapted from https://owasp.org/www-community/controls/Content_Security_Policy.
+const contentSecurityPolicy = `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; frame-ancestors 'self'; form-action 'self';`
+
 func requestHasSiteAccess(r *http.Request) bool {
 	c, err := r.Cookie(siteAccessCookie.Name)
 	return err == nil && c.Value == siteAccessCookie.Value
@@ -282,6 +286,7 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 // serveUIInternal handles the root GET "/" route.
 func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
 	http.SetCookie(w, siteAccessCookie)
+	w.Header().Set("Content-Security-Policy", contentSecurityPolicy)
 
 	// If a non-empty query is present, require either a site access cookie or a
 	// no-browsers header.
