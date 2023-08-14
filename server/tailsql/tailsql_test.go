@@ -128,6 +128,7 @@ func TestSecrets(t *testing.T) {
 
 	ss := setectest.NewServer(t, db, nil)
 	hs := httptest.NewServer(ss.Mux)
+	defer hs.Close()
 
 	opts := tailsql.Options{
 		Sources: []tailsql.DBSpec{{
