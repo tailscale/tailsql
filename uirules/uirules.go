@@ -62,8 +62,8 @@ var FormatJSONText = tailsql.UIRewriteRule{
 var LinkURLText = tailsql.UIRewriteRule{
 	Value: regexp.MustCompile(`^https?://\S+$`),
 	Apply: func(col, s string, _ []string) any {
-		if _, err := url.Parse(s); err == nil {
-			return template.HTML(fmt.Sprintf(`<a href="%s" referrerpolicy=no-referrer rel=noopener>`, s))
+		if u, err := url.Parse(s); err == nil {
+			return template.HTML(fmt.Sprintf(`<a href="%s" referrerpolicy=no-referrer rel=noopener>`, u.String()))
 		}
 		return s
 	},
