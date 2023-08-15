@@ -103,6 +103,7 @@ func mustGet(t *testing.T, cli *http.Client, url string, headers ...string) []by
 var testUIRules = []tailsql.UIRewriteRule{
 	uirules.StripeIDLink,
 	uirules.FormatSQLSource,
+	uirules.LinkURLText,
 
 	// Decorate references to Go documentation.
 	{
@@ -231,8 +232,10 @@ func TestServer(t *testing.T) {
 			`<tt>{&#34;json&#34;:true}</tt>`,
 			// SQL should be formatted verbatim.
 			`<code><pre>CREATE TABLE misc (x);</pre></code>`,
-			// Go documentation should link to godoc.org.q
+			// Go documentation should link to godoc.org.
 			`<a href="https://godoc.org?q=tailscale.com/tailcfg.User"`,
+			// HTTP(S) URLs should be wrapped in links.
+			`<a href="https://github.com" `,
 		} {
 			if !strings.Contains(ui, want) {
 				t.Errorf("Missing UI substring %q", want)
