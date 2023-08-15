@@ -82,6 +82,7 @@ func main() {
 		opts.UIRewriteRules = []tailsql.UIRewriteRule{
 			uirules.FormatSQLSource,
 			uirules.FormatJSONText,
+			uirules.LinkURLText,
 		}
 
 		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
