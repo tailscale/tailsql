@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"net/url"
 	"regexp"
 
 	"github.com/tailscale/tailsql/server/tailsql"
@@ -52,6 +53,18 @@ var FormatJSONText = tailsql.UIRewriteRule{
 		if json.Valid([]byte(s)) {
 			esc := template.HTMLEscapeString(s)
 			return template.HTML(fmt.Sprintf(`<tt>%s</tt>`, esc))
+		}
+		return s
+	},
+}
+
+// LinkURLText is a UI rewrite rule to add links for URL-shaped results.
+var LinkURLText = tailsql.UIRewriteRule{
+	Value: regexp.MustCompile(`^https?://\S+$`),
+	Apply: func(col, s string, _ []string) any {
+		if u, err := url.Parse(s); err == nil {
+			return template.HTML(fmt.Sprintf(`<a href="%s" referrerpolicy=no-referrer rel=noopener>%s</a>`,
+				u.String(), template.HTMLEscaper(s)))
 		}
 		return s
 	},

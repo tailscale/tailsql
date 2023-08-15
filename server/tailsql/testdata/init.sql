@@ -33,3 +33,5 @@ INSERT INTO misc VALUES ('{"json":true}');
 INSERT INTO misc VALUES ('CREATE TABLE misc (x);');
 -- Stable IDs.
 INSERT INTO misc VALUES ('godoc:tailscale.com/tailcfg.User');
+-- URL links.
+INSERT INTO misc VALUES ('https://github.com?q=1&r=2');
