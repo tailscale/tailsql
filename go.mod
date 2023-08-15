@@ -10,7 +10,7 @@ require (
 	github.com/tailscale/setec v0.0.0-20230814184909-2dc1e0e620ea
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	modernc.org/sqlite v1.25.0
-	tailscale.com v1.1.1-0.20230814210354-c17a8177692a
+	tailscale.com v1.1.1-0.20230815225251-7ed3681cbeb9
 )
 
 require (
