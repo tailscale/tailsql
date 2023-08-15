@@ -235,7 +235,8 @@ func TestServer(t *testing.T) {
 			// Go documentation should link to godoc.org.
 			`<a href="https://godoc.org?q=tailscale.com/tailcfg.User"`,
 			// HTTP(S) URLs should be wrapped in links.
-			`<a href="https://github.com" `,
+			`<a href="https://github.com?q=1&r=2" `,
+			`https://github.com?q=1&amp;r=2</a>`,
 		} {
 			if !strings.Contains(ui, want) {
 				t.Errorf("Missing UI substring %q", want)
