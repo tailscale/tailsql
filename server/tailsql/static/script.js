@@ -12,7 +12,7 @@
     }
 
     query.addEventListener("keydown", (evt) => {
-        if (evt.shiftKey && evt.code == "Enter") {
+        if (evt.shiftKey && evt.key == "Enter") {
             evt.preventDefault();
             if (hasQuery()) {
                 qButton.click();
