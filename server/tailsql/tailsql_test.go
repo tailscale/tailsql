@@ -194,6 +194,7 @@ func TestServer(t *testing.T) {
 		},
 		UIRewriteRules: testUIRules,
 		Authorize:      authorizer.PeerCaps(nil),
+		Logf:           t.Logf,
 	})
 	if err != nil {
 		t.Fatalf("NewServer: unexpected error: %v", err)
