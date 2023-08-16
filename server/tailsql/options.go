@@ -214,6 +214,8 @@ type UILink struct {
 //
 //   - Its Column regexp is empty or matches the column name, and
 //   - Its Value regexp is empty or matches the value string
+//
+// If a rule matches, its Apply function is called.
 type UIRewriteRule struct {
 	Column *regexp.Regexp // pattern for the column name (nil matches all)
 	Value  *regexp.Regexp // pattern for the value (nil matches all)
@@ -222,6 +224,9 @@ type UIRewriteRule struct {
 	// result of matching the value regexp (if any). Its return value replaces
 	// the input when the value is rendered. If Apply == nil, the input is not
 	// modified.
+	//
+	// As a special case, if Apply returns a nil value, the rule evaluator skips
+	// the rule as if it had not matched, and goes on to the next rule.
 	Apply func(column, input string, valueMatch []string) any
 }
 
@@ -244,7 +249,11 @@ func (u UIRewriteRule) checkApply(column, input string) (bool, any) {
 	if u.Apply == nil {
 		return true, input
 	}
-	return true, u.Apply(column, input, m)
+	v := u.Apply(column, input, m)
+	if v == nil {
+		return false, nil
+	}
+	return true, v
 }
 
 // A DBHandle wraps an open SQL database with descriptive metadata.

@@ -103,6 +103,7 @@ func mustGet(t *testing.T, cli *http.Client, url string, headers ...string) []by
 var testUIRules = []tailsql.UIRewriteRule{
 	uirules.StripeIDLink,
 	uirules.FormatSQLSource,
+	uirules.FormatJSONText,
 	uirules.LinkURLText,
 
 	// Decorate references to Go documentation.
@@ -117,8 +118,14 @@ var testUIRules = []tailsql.UIRewriteRule{
 		},
 	},
 
-	// This rule is last to exercise order.
-	uirules.FormatJSONText,
+	// This rule matches what the previous one did, to test that we stop once we
+	// find a matching rule.
+	{
+		Value: regexp.MustCompile(`^godoc:.+$`),
+		Apply: func(col, s string, match []string) any {
+			return "some bogus nonsense"
+		},
+	},
 }
 
 func TestSecrets(t *testing.T) {

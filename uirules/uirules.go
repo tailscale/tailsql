@@ -54,7 +54,7 @@ var FormatJSONText = tailsql.UIRewriteRule{
 			esc := template.HTMLEscapeString(s)
 			return template.HTML(fmt.Sprintf(`<tt>%s</tt>`, esc))
 		}
-		return s
+		return nil // fail over to the next rule
 	},
 }
 
