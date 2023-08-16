@@ -231,9 +231,9 @@ type UIRewriteRule struct {
 	Apply func(column, input string, valueMatch []string) any
 }
 
-// checkApply reports whether u matches the specified column and input, and if
+// CheckApply reports whether u matches the specified column and input, and if
 // so returns the result of applying u to it.
-func (u UIRewriteRule) checkApply(column, input string) (bool, any) {
+func (u UIRewriteRule) CheckApply(column, input string) (bool, any) {
 	if u.Column != nil && !u.Column.MatchString(column) {
 		return false, nil // no match for this column name
 	}

@@ -39,7 +39,7 @@ var StripeIDLink = tailsql.UIRewriteRule{
 
 // FormatSQLSource is a UI rewrite rule to render SQL query text preformatted.
 var FormatSQLSource = tailsql.UIRewriteRule{
-	Value: regexp.MustCompile(`(?is)\b(select\s+.*from|create\s+(table|view))\b`),
+	Value: regexp.MustCompile(`(?is)\b(select\s+.*?(;\s*$|from\b)|create\s+(table|view)\b)`),
 	Apply: func(col, s string, _ []string) any {
 		esc := template.HTMLEscapeString(s)
 		return template.HTML(fmt.Sprintf(`<code><pre>%s</pre></code>`, esc))

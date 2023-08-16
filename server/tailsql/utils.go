@@ -74,7 +74,7 @@ func (r *dbResult) uiOutput(null string, uiRules []UIRewriteRule) *dbResult {
 			// Check for rewrite rules.
 			colName := r.Columns[i]
 			for _, rule := range uiRules {
-				ok, newValue := rule.checkApply(colName, s)
+				ok, newValue := rule.CheckApply(colName, s)
 				if ok {
 					row[i] = newValue
 					continue nextCol
