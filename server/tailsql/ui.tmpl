@@ -15,9 +15,10 @@
 
 <div id="input">
   <form id="qform" method="GET">
-    <textarea name="q" rows=10 cols=90 id="query">{{- .Query -}} </textarea>
+    <textarea name="q" rows=10 cols=90 id="query">{{- .Query -}} </textarea><br />
+    <span class="uihint">Hint: Use shift-enter to submit your query</span>
     <div class="action">
-      <span><button class="ctrl" title="query">Query</button></span>
+      <span><button id="send-query" class="ctrl" title="query">Query</button></span>
       <span><button class="ctrl" id="dl-button" title="download">Download as CSV</button></span>
       <span><label>Source: <select id="sources" class="ctrl" name="src">{{range $s := .Sources}}
         <option class="ctrl" value="{{$s.Source}}"{{if eq $.Source .Source}} selected{{end}}>{{$s.Label}}</option>
@@ -54,6 +55,6 @@
 </table></div>
 {{end -}}
 
-</body>
 <script src="/static/script.js"></script>
+</body>
 </html>
