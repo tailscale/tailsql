@@ -1,10 +1,24 @@
 (() => {
     const query = document.getElementById('query');
+    const qButton = document.getElementById('send-query');
     const dlButton = document.getElementById("dl-button");
-    const qform = document.getElementById("qform");
+    const qform = document.getElementById('qform');
     const output = document.getElementById('output');
     const origin = document.location.origin;
     const sources = document.getElementById('sources');
+
+    function hasQuery() {
+        return query.value.trim() != "";
+    }
+
+    query.addEventListener("keydown", (evt) => {
+        if (evt.shiftKey && evt.key == "Enter") {
+            evt.preventDefault();
+            if (hasQuery()) {
+                qButton.click();
+            }
+        }
+    })
 
     function performDownload(name, url) {
         var link = document.createElement('a');

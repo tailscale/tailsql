@@ -110,6 +110,17 @@ div.error {
   color: var(--text-light);
 }
 
+.uihint {
+  display: flex;
+  justify-content: flex-start;
+}
+span.uihint {
+  font-size: 60%;
+  font-style: italic;
+  padding: 0.1rem;
+  color: var(--text-light);
+}
+
 div.action {
   display: flex;
   justify-content: flex-start;
