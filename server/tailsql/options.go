@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -109,7 +110,7 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 			if err != nil {
 				return nil, fmt.Errorf("read key file for %q: %w", spec.Source, err)
 			}
-			connString = string(data)
+			connString = strings.TrimSpace(string(data))
 		case spec.Secret != "":
 			connString = string(store.Secret(spec.Secret).Get())
 		default:
