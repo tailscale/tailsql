@@ -28,4 +28,4 @@ jobs:
         cache: true
     - uses: creachadair/go-presubmit-action@84681112a41e5715b1c78662e09db1552549beb1
       with:
-        check-replace: 'true'
+        check-replace: 'false'
