@@ -140,10 +140,10 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 func openAndPing(driver, connString string) (*sql.DB, error) {
 	db, err := sql.Open(driver, connString)
 	if err != nil {
-		return nil, fmt.Errorf("open %s %q: %w", driver, connString, err)
+		return nil, fmt.Errorf("open %s: %w", driver, err)
 	} else if err := db.PingContext(context.Background()); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("ping %s %q: %w", driver, connString, err)
+		return nil, fmt.Errorf("ping %s %w", driver, err)
 	}
 	return db, nil
 }
