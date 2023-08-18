@@ -22,10 +22,14 @@
     })
 
     body.addEventListener("keyup", (evt) => {
-        if (evt.ctrlKey) {
-            var v = parseInt(evt.key);
-            if (v > 0 && v <= sources.options.length) {
-                sources.options[v-1].selected = true;
+        if (evt.altKey) {
+            var c = evt.code.match(/^Digit(\d)$/);
+            if (c) {
+                var v = parseInt(c[1]);
+                if (v > 0 && v <= sources.options.length) {
+                    evt.preventDefault();
+                    sources.options[v-1].selected = true;
+                }
             }
         }
     });
