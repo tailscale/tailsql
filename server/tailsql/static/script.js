@@ -21,7 +21,7 @@
         }
     })
 
-    body.addEventListener("keydown", (evt) => {
+    body.addEventListener("keyup", (evt) => {
         if (evt.ctrlKey) {
             var v = parseInt(evt.key);
             if (v > 0 && v <= sources.options.length) {
