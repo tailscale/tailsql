@@ -105,3 +105,5 @@ require (
 	modernc.org/token v1.0.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
+
+replace github.com/tailscale/setec => ../setec
