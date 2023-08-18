@@ -27,5 +27,3 @@ jobs:
         go-version: ${{ matrix.go-version }}
         cache: true
     - uses: creachadair/go-presubmit-action@v1
-      with:
-        staticcheck-version: 'cee67be0'
