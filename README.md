@@ -46,7 +46,7 @@ curl -s -H 'sec-tailsql: 1' http://localhost:8080/csv --url-query 'q=select * fr
 curl -s -H 'sec-tailsql: 1' http://localhost:8080/json --url-query 'q=select location, count(*) n from users where location is not null group by location order by n desc'
 
 # Check the query log.
-curl -s -H 'sec-tailsql: 1' http://localhost:8080/json --url-query 'q=select * from query_log' --url-query src=local
+curl -s -H 'sec-tailsql: 1' http://localhost:8080/json --url-query 'q=select * from query_log' --url-query src=self
 ```
 
 ## Running on Tailscale
