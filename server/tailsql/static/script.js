@@ -6,6 +6,7 @@
     const output = document.getElementById('output');
     const origin = document.location.origin;
     const sources = document.getElementById('sources');
+    const body = document.getElementById('tsql');
 
     function hasQuery() {
         return query.value.trim() != "";
@@ -19,6 +20,19 @@
             }
         }
     })
+
+    body.addEventListener("keyup", (evt) => {
+        if (evt.altKey) {
+            var c = evt.code.match(/^Digit(\d)$/);
+            if (c) {
+                var v = parseInt(c[1]);
+                if (v > 0 && v <= sources.options.length) {
+                    evt.preventDefault();
+                    sources.options[v-1].selected = true;
+                }
+            }
+        }
+    });
 
     function performDownload(name, url) {
         var link = document.createElement('a');
