@@ -236,7 +236,7 @@ func TestServer(t *testing.T) {
 			// Stripe IDs should get wrapped in links.
 			`<a href="https://dashboard.stripe.com/customers/cus_Fak3Cu6t0m3rId"`,
 			`<a href="https://dashboard.stripe.com/invoices/in_1f4k31nv0Ic3Num83r"`,
-			`<a href="https://dashboard.stripe.com/subscriptions/sub_1fAk34sH3l1anDMn0tgNatKT"`,
+			`<a href="https://dashboard.stripe.com/subscriptions/sub_fAk34sH3l1anDMn0tgNatKT"`,
 			// JSON text should be escaped and teletyped.
 			`<tt>{&#34;json&#34;:true}</tt>`,
 			// SQL should be formatted verbatim.
