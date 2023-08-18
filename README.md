@@ -87,7 +87,7 @@ The basic workflow to set up a new TailSQL server is:
     http.ListenAndServe("localhost:8080", tsql.NewMux())
     ```
 
-Note that the server does not do any authentication or encryption of its own. If you want to share the playground beyond your own local machine, you will need to provide appropriate access controls. One easy way to do this is using Tailscale (which handles encryption, ACLs, and TLS), but if you prefer you can handle those details separately.
+Note that the server does not do any authentication or encryption of its own. If you want to share the playground beyond your own local machine, you will need to provide appropriate access controls. One easy way to do this is using Tailscale (which handles encryption, access control, and TLS), but if you prefer you can handle those details separately.
 
 ### Database Drivers
 
@@ -143,7 +143,7 @@ The `LocalState` option permits you to enable logging of successful queries in a
 In addition, if the `LocalSource` option is set, a read-only view of the the query log database will be included in the list of available data sources, so users can query the log directly in the playground:
 
 ```sql
--- List the five most-successful recent queries.
+-- List the five most-recent successful queries.
 select * from query_log order by timestamp desc limit 5;
 ```
 
@@ -170,7 +170,7 @@ opts := tailsql.Options{
 
 By default, the server does not do any authorization. The `LocalClient` option allows you to plug the server in to Tailscale: If this option is set, it is used to resolve callers and only logged-in users will be permitted to make queries. (You could theoretically also implement your own thing without Tailscale, but that would be a lot of work for very little benefit).
 
-To further customize authorization, you can provide a callback via the `Authorize` option. The [authorizer][authz] provides some pre-defined implementations, or you can roll your own. This is useful if you want to expose multiple data sources, some of which have more restrictive access policies.
+To further customize authorization, you can provide a callback via the `Authorize` option. The [authorizer][authz] package provides some pre-defined implementations, or you can roll your own. This is useful if you want to expose multiple data sources, some of which have more restrictive access policies.
 
 ### UI Rewrite Rules
 
