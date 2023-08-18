@@ -102,6 +102,7 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 
 		// Resolve the connection string.
 		var connString string
+		var w setec.Watcher
 		switch {
 		case spec.URL != "":
 			connString = spec.URL
@@ -112,26 +113,39 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 			}
 			connString = strings.TrimSpace(string(data))
 		case spec.Secret != "":
-			connString = string(store.Secret(spec.Secret).Get())
+			w = store.Watcher(spec.Secret)
+			connString = string(w.Get())
 		default:
 			panic("unexpected: no connection source is defined after validation")
 		}
 
-		db, err := sql.Open(spec.Driver, connString)
+		db, err := openAndPing(spec.Driver, connString)
 		if err != nil {
-			return nil, fmt.Errorf("open %s %q: %w", spec.Driver, connString, err)
-		} else if err := db.PingContext(context.Background()); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("ping %s %q: %w", spec.Driver, connString, err)
+			return nil, err
 		}
 		srcs[i] = &dbHandle{
-			src:   spec.Source,
-			label: spec.Label,
-			named: spec.Named,
-			db:    db,
+			src:    spec.Source,
+			driver: spec.Driver,
+			label:  spec.Label,
+			named:  spec.Named,
+			db:     db,
+		}
+		if spec.Secret != "" {
+			go srcs[i].handleUpdates(spec.Secret, w, o.logf())
 		}
 	}
 	return srcs, nil
+}
+
+func openAndPing(driver, connString string) (*sql.DB, error) {
+	db, err := sql.Open(driver, connString)
+	if err != nil {
+		return nil, fmt.Errorf("open %s: %w", driver, err)
+	} else if err := db.PingContext(context.Background()); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("ping %s: %w", driver, err)
+	}
+	return db, nil
 }
 
 // CheckSources validates the sources of o. If this succeeds, it also returns a
@@ -265,7 +279,8 @@ func (u UIRewriteRule) CheckApply(column, input string) (bool, any) {
 // updated with a new underlying database. The Swap method ensures the new
 // value is exchanged without races.
 type dbHandle struct {
-	src string
+	src    string
+	driver string
 
 	// mu protects the fields below.
 	// Hold shared to read the label and issue queries against db.
@@ -274,6 +289,28 @@ type dbHandle struct {
 	label string
 	db    *sql.DB
 	named map[string]string
+}
+
+// handleUpdates polls w indefinitely for updates to the connection string for
+// h, and reopens the database with the new string when a new value arrives.
+// This method should be called in a goroutine.
+func (h *dbHandle) handleUpdates(name string, w setec.Watcher, logf logger.Logf) {
+	logf("[tailsql] starting updater for secret %q", name)
+	for range w.Ready() {
+		// N.B. Don't log the secret value itself. It's fine to log the name of
+		// the secret and the source, those are already in the config.
+		connString := string(w.Get())
+		db, err := openAndPing(h.driver, connString)
+		if err != nil {
+			logf("WARNING: opening new database for %q: %v", h.src, err)
+			continue
+		}
+		logf("[tailsql] opened new connection for source %q", h.src)
+		h.mu.Lock()
+		h.db.Close()
+		h.db = db
+		h.mu.Unlock()
+	}
 }
 
 // Source returns the source name defined for h.
