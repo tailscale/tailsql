@@ -6,6 +6,7 @@
     const output = document.getElementById('output');
     const origin = document.location.origin;
     const sources = document.getElementById('sources');
+    const body = document.getElementById('tsql');
 
     function hasQuery() {
         return query.value.trim() != "";
@@ -19,6 +20,15 @@
             }
         }
     })
+
+    body.addEventListener("keydown", (evt) => {
+        if (evt.ctrlKey) {
+            var v = parseInt(evt.key);
+            if (v > 0 && v <= sources.options.length) {
+                sources.options[v-1].selected = true;
+            }
+        }
+    });
 
     function performDownload(name, url) {
         var link = document.createElement('a');
