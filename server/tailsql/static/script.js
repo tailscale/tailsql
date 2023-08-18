@@ -21,7 +21,7 @@
         }
     })
 
-    body.addEventListener("keyup", (evt) => {
+    body.addEventListener("keydown", (evt) => {
         if (evt.altKey) {
             var c = evt.code.match(/^Digit(\d)$/);
             if (c) {
