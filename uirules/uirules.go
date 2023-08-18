@@ -18,7 +18,7 @@ import (
 // StripeIDLink is a UI rewrite rule that wraps Stripe customer and invoice ID
 // strings to the Stripe dashboard.
 var StripeIDLink = tailsql.UIRewriteRule{
-	Value: regexp.MustCompile(`^(cus_|in_1)\w+$`),
+	Value: regexp.MustCompile(`^(cus_|in_1|sub_1)\w+$`),
 	Apply: func(col, s string, m []string) any {
 		var kind string
 		switch m[1] {
@@ -26,6 +26,8 @@ var StripeIDLink = tailsql.UIRewriteRule{
 			kind = "customer"
 		case "in_1":
 			kind = "invoice"
+		case "sub_1":
+			kind = "subscription"
 		default:
 			return s
 		}

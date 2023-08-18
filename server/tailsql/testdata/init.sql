@@ -27,6 +27,8 @@ CREATE TABLE misc (x);
 INSERT INTO misc VALUES ('cus_Fak3Cu6t0m3rId');
 -- A Stripe invoice ID (fake)
 INSERT INTO misc VALUES ('in_1f4k31nv0Ic3Num83r');
+-- A Stripe subscription ID (fake)
+INSERT INTO misc VALUES ('sub_1fAk34sH3l1anDMn0tgNatKT');
 -- JSON text.
 INSERT INTO misc VALUES ('{"json":true}');
 -- SQL schema definition.
