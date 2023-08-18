@@ -143,7 +143,7 @@ func openAndPing(driver, connString string) (*sql.DB, error) {
 		return nil, fmt.Errorf("open %s: %w", driver, err)
 	} else if err := db.PingContext(context.Background()); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("ping %s %w", driver, err)
+		return nil, fmt.Errorf("ping %s: %w", driver, err)
 	}
 	return db, nil
 }
