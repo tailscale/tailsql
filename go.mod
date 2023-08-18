@@ -106,4 +106,3 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
-replace github.com/tailscale/setec => github.com/creachadair/setec v0.0.0-20230818043111-985752b069b6
