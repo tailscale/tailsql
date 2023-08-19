@@ -9,7 +9,7 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20230818020417-63e702a1c385
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
-	honnef.co/go/tools v0.4.3
+	honnef.co/go/tools v0.4.5
 	modernc.org/sqlite v1.25.0
 	tailscale.com v1.1.1-0.20230818192744-6e57dee7eb43
 )
@@ -91,7 +91,7 @@ require (
 	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.9.4-0.20230601214343-86c93e8732cc // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
