@@ -9,12 +9,14 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20230818020417-63e702a1c385
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
+	honnef.co/go/tools v0.4.3
 	modernc.org/sqlite v1.25.0
 	tailscale.com v1.1.1-0.20230818192744-6e57dee7eb43
 )
 
 require (
 	filippo.io/edwards25519 v1.0.0 // indirect
+	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20210105120005-909beea2cc74 // indirect
@@ -81,6 +83,7 @@ require (
 	go4.org/mem v0.0.0-20220726221520-4f986261bf13 // indirect
 	go4.org/netipx v0.0.0-20230728180743-ad4cb58a6516 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20230425010034-47ecfdc1ba53 // indirect
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
