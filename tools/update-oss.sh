@@ -27,20 +27,17 @@ module=tailscale.com
 # The branch name to use when making an update.
 branch="$USER"/update-oss-version
 
-digest="$(
-    cd "$repo"
-    go list -json "$module" | \
-        jq -r .Module.Version | \
-        cut -d- -f3
-)"
+have="$(go list -f '{{.Version}}' -m "$module" | cut -d- -f3)"
+want="$(cd "$repo";  go list -f '{{.Version}}' -m "$module" |  cut -d- -f3)"
+if [[ "$have" = "$want" ]] ; then
+    echo "Module $module is up-to-date at commit $have" 1>&2
+    exit 0
+fi
+
 go get "$module"@"$digest"
 go mod tidy
-if git diff --quiet ; then
-    echo "Module $module is up-to-date at commit $digest" 1>&2
-else
-    git checkout -b "$branch"
-    git commit -m "go.mod: update $module to commit $digest" go.mod go.sum
-    git push -u origin "$branch"
-    echo "Module $module updated to commit $digest" 1>&2
-    echo "Branch $branch created" 1>&2
-fi
+git checkout -b "$branch"
+git commit -m "go.mod: update $module to commit $digest" go.mod go.sum
+git push -u origin "$branch"
+echo "Module $module updated to commit $digest" 1>&2
+echo "Branch $branch created" 1>&2
