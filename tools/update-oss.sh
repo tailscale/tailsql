@@ -34,10 +34,10 @@ if [[ "$have" = "$want" ]] ; then
     exit 0
 fi
 
-go get "$module"@"$digest"
+go get "$module"@"$want"
 go mod tidy
 git checkout -b "$branch"
-git commit -m "go.mod: update $module to commit $digest" go.mod go.sum
+git commit -m "go.mod: update $module to commit $want" go.mod go.sum
 git push -u origin "$branch"
-echo "Module $module updated to commit $digest" 1>&2
+echo "Module $module updated to commit $want" 1>&2
 echo "Branch $branch created" 1>&2
