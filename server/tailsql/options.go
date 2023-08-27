@@ -74,7 +74,7 @@ type Options struct {
 
 	// If non-nil, use this store to fetch secret values. This is required if
 	// any of the sources specifies a named secret for its connection string.
-	SecretStore *setec.Store
+	SecretStore *setec.Store `json:"-"`
 
 	// Optional rules to apply when rendering text for presentation in the UI.
 	// After generating the value string, each rule is matched in order, and the
