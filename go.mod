@@ -11,7 +11,7 @@ require (
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	honnef.co/go/tools v0.4.5
 	modernc.org/sqlite v1.25.0
-	tailscale.com v1.1.1-0.20230823172511-78f087aa0207
+	tailscale.com v1.1.1-0.20230825183639-ce5909dafcd2
 )
 
 require (
@@ -73,7 +73,7 @@ require (
 	github.com/tailscale/golang-x-crypto v0.0.0-20230713185742-f0b76a10a08e // indirect
 	github.com/tailscale/goupnp v1.0.1-0.20210804011211-c64d0f06ea05 // indirect
 	github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85 // indirect
-	github.com/tailscale/wireguard-go v0.0.0-20230710185534-bb2c8f22eccf // indirect
+	github.com/tailscale/wireguard-go v0.0.0-20230824215414-93bd5cbf7fd8 // indirect
 	github.com/tcnksm/go-httpstat v0.2.0 // indirect
 	github.com/tink-crypto/tink-go/v2 v2.0.0 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
