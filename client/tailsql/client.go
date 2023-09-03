@@ -126,10 +126,15 @@ func callGET(ctx context.Context, do func(*http.Request) (*http.Response, error)
 		return nil, fmt.Errorf("get %q: %w", base, err)
 	}
 	if rsp.StatusCode != http.StatusOK {
+		const maxErrorLen = 500
+
 		body, _ := io.ReadAll(rsp.Body)
 		rsp.Body.Close()
-		line := strings.TrimSpace(strings.SplitN(string(body), "\n", 2)[0])
-		return nil, errors.New(line)
+		msg := strings.TrimSpace(strings.ReplaceAll(string(body), "\n", " "))
+		if len(msg) > maxErrorLen {
+			msg = msg[:maxErrorLen-3] + "..."
+		}
+		return nil, errors.New(msg)
 	}
 	return rsp.Body, nil
 }
