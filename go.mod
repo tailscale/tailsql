@@ -11,7 +11,7 @@ require (
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	honnef.co/go/tools v0.4.5
 	modernc.org/sqlite v1.25.0
-	tailscale.com v1.1.1-0.20230901192334-003e4aff717f
+	tailscale.com v1.1.1-0.20230912211006-eb9f1db269d7
 )
 
 require (

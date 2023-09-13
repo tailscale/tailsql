@@ -328,5 +328,5 @@ nhooyr.io/websocket v1.8.7 h1:usjR2uOr/zjjkVMy0lW+PPohFok7PCow5sDjLgX4P4g=
 nhooyr.io/websocket v1.8.7/go.mod h1:B70DZP8IakI65RVQ51MsWP/8jndNma26DVA/nFSCgW0=
 software.sslmate.com/src/go-pkcs12 v0.2.0 h1:nlFkj7bTysH6VkC4fGphtjXRbezREPgrHuJG20hBGPE=
 software.sslmate.com/src/go-pkcs12 v0.2.0/go.mod h1:23rNcYsMabIc1otwLpTkCCPwUq6kQsTyowttG/as0kQ=
-tailscale.com v1.1.1-0.20230901192334-003e4aff717f h1:vYgI4Jc6/dYb5XBGg8RtRy3lVS1GIEKwaTJ1Wtn6a78=
-tailscale.com v1.1.1-0.20230901192334-003e4aff717f/go.mod h1:L/6mVRFA/zTI/46+8cHMddZAvb1xf2LTI/LJ/D8CbeM=
+tailscale.com v1.1.1-0.20230912211006-eb9f1db269d7 h1:18zyV+7+k6z9lay+W1yYGT1XEWpG4v/BdPDccboS9wI=
+tailscale.com v1.1.1-0.20230912211006-eb9f1db269d7/go.mod h1:L/6mVRFA/zTI/46+8cHMddZAvb1xf2LTI/LJ/D8CbeM=
