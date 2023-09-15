@@ -87,7 +87,7 @@ The basic workflow to set up a new TailSQL server is:
     http.ListenAndServe("localhost:8080", tsql.NewMux())
     ```
 
-Note that the server does not do any authentication or encryption of its own. If you want to share the playground beyond your own local machine, you will need to provide appropriate access controls. One easy way to do this is using Tailscale (which handles encryption, access control, and TLS), but if you prefer you can handle those details separately.
+Note that the server does not do any authentication or encryption of its own. If you want to share the playground beyond your own local machine, you will need to provide appropriate access controls. One easy way to do this is using Tailscale (which handles encryption, access control, and TLS), but if you prefer you can handle those details separately by providing your own implementation of the [`tailsql.LocalClient` interface][lcintf] and setting the [`Authorize` option][authopt].
 
 ### Database Drivers
 
@@ -196,8 +196,10 @@ Only the first matching rule is applied; subsequent rules are skipped.
 
 
 <!-- references -->
+[authopt]: https://godoc.org/github.com/tailscale/tailsql/server/tailsql#Options.Authorize
 [authz]: https://godoc.org/github.com/tailscale/tailsql/authorizer
 [dbsql]: https://godoc.org/database/sql
+[lcintf]: https://godoc.org/github.com/tailscale/tailsql/server/tailsql#LocalClient
 [options]: https://godoc.org/github.com/tailscale/tailsql/server/tailsql#Options
 [stschema]: ./server/tailsql/state-schema.sql
 [tailsql]: https://godoc.org/github.com/tailscale/tailsql/server/tailsql
