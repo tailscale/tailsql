@@ -1,15 +1,17 @@
 import { Params, Area, Cycle, Loop } from './sprite.js';
 
 (() => {
-    const query = document.getElementById('query');
-    const qButton = document.getElementById('send-query');
+    const query    = document.getElementById('query');
+    const qButton  = document.getElementById('send-query');
     const dlButton = document.getElementById("dl-button");
-    const qform = document.getElementById('qform');
-    const output = document.getElementById('output');
-    const origin = document.location.origin;
-    const sources = document.getElementById('sources');
-    const body = document.getElementById('tsql');
-    const velo = 8, delay = 100, runChance = 0.01;
+    const qform    = document.getElementById('qform');
+    const output   = document.getElementById('output');
+    const origin   = document.location.origin;
+    const sources  = document.getElementById('sources');
+    const body     = document.getElementById('tsql');
+
+    const nuts = /tailsql|squirrel|acorn/i;
+    const velo = 8, delay = 100, runChance = 0.03;
     let hasRun = false;
 
     const param = new Params(256, 256, 8, 8);
@@ -22,7 +24,9 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
 
     function shouldSquirrel() {
         return !hasRun &&
-            query.value.trim().toLowerCase().includes("squirrel") &&
+            (query.value.trim().match(nuts) ||
+             new Date().toTimeString().slice(0, 5) == "16:20"
+            ) &&
             Math.random() < runChance;
     }
 
