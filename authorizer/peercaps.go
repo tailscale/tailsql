@@ -14,7 +14,8 @@ import (
 )
 
 // tailsqlCap is the default name of the tailsql capability.
-const tailsqlCap = "https://tailscale.com/cap/tailsql"
+const tailsqlCap = "tailscale.com/cap/tailsql"
+const tailsqlCapHTTP = "https://" + tailsqlCap
 
 // PeerCaps returns an authorization function that uses peer capabilities from
 // the tailnet to check access for query sources.
@@ -38,6 +39,14 @@ func PeerCaps(logf logger.Logf) func(string, *apitype.WhoIsResponse) error {
 			DataSrc []string `json:"src"`
 		}
 		rules, err := tailcfg.UnmarshalCapJSON[rule](who.CapMap, tailsqlCap)
+
+		// TODO(creachadair): As a temporary measure to allow us to migrate
+		// capability names away from the https:// prefix, if we don't get a
+		// result without the prefix, try again with it. Remove this once the
+		// policy has been updated on the server side.
+		if err == nil && len(rules) == 0 {
+			rules, err = tailcfg.UnmarshalCapJSON[rule](who.CapMap, tailsqlCapHTTP)
+		}
 		if err != nil || len(rules) == 0 {
 			return errors.New("not authorized for access tailsql")
 		}
