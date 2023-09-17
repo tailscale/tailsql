@@ -184,3 +184,12 @@ div.action {
 .action .ctrl:-webkit-details-marker {
   display: none;
 }
+
+#nut {
+  transform: scale(1.5);
+  position: relative;
+  height: 32px;
+  width: 32px;
+  background: url('/static/nut.png') 0px 0px;
+  display: none;
+}
