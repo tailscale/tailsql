@@ -439,7 +439,7 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 		defer func() {
 			out.Elapsed = time.Since(start)
 			s.logf("[tailsql] query src=%q query=%q elapsed=%v err=%v",
-				src, query, out.Elapsed, err)
+				src, query, out.Elapsed.Round(time.Millisecond), err)
 
 			// Record successful queries in the persistent log.  But don't log
 			// queries to the state database itself.
