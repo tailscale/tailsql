@@ -1,3 +1,5 @@
+import { Params, Area, Cycle, Loop } from './sprite.js';
+
 (() => {
     const query = document.getElementById('query');
     const qButton = document.getElementById('send-query');
@@ -7,9 +9,50 @@
     const origin = document.location.origin;
     const sources = document.getElementById('sources');
     const body = document.getElementById('tsql');
+    const velo = 8, delay = 100, runChance = 0.01;
+    let hasRun = false;
+
+    const param = new Params(256, 256, 8, 8);
+    const aRunRight = new Loop(velo, 0, 5, [5,1,2,3]);
+    const aRunLeft = new Loop(-velo, 0, 6, [5,1,2,3]);
 
     function hasQuery() {
         return query.value.trim() != "";
+    }
+
+    function shouldSquirrel() {
+        return !hasRun &&
+            query.value.trim().toLowerCase().includes("squirrel") &&
+            Math.random() < runChance;
+    }
+
+    function maybeRunSquirrel() {
+        if (!shouldSquirrel()) {
+            return;
+        }
+        // Squirrel art from:
+        //   http://saralara93.blogspot.com/2014/03/concept-art-part-3-squirrel.html
+
+        const nut = document.createElement("div");
+        nut.setAttribute("id", "nut");
+        document.getElementById("input").prepend(nut);
+        const isOdd = query.value.length%2 == 1;
+        const area = new Area({
+            figure: nut,
+            params: param,
+            startx: isOdd ? 100 : 0,
+            wrap:   false,
+        });
+        const cycle = new Cycle(isOdd ? aRunLeft : aRunRight);
+        hasRun = true;
+        area.setVisible(true);
+        let timer = setInterval(() => {
+            if (cycle.update(area)) {
+                clearInterval(timer);
+                timer = null;
+                area.setVisible(false);
+            }
+        }, delay);
     }
 
     query.addEventListener("keydown", (evt) => {
@@ -19,6 +62,7 @@
                 qButton.click();
             }
         }
+        maybeRunSquirrel()
     })
 
     body.addEventListener("keydown", (evt) => {
