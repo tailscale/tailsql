@@ -10,8 +10,8 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
     const sources  = document.getElementById('sources');
     const body     = document.getElementById('tsql');
 
-    const nuts = /tailsql|squirrel|acorn/i;
-    const velo = 8, delay = 100, runChance = 0.03;
+    const nuts = /a?corn|\bnut\b|seed|squirrel|tailsql/i;
+    const velo = 5, delay = 60, runChance = 0.03;
     let hasRun = false;
 
     const param = new Params(256, 256, 8, 8);
@@ -37,9 +37,9 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
         // Squirrel art from:
         //   http://saralara93.blogspot.com/2014/03/concept-art-part-3-squirrel.html
 
-        const nut = document.createElement("div");
-        nut.setAttribute("id", "nut");
-        document.getElementById("input").prepend(nut);
+        const nut = document.getElementById("nut");
+        if (nut === null) { return; } // UI not configured
+
         const isOdd = query.value.length%2 == 1;
         const area = new Area({
             figure: nut,

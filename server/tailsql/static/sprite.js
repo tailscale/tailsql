@@ -45,7 +45,7 @@ export class Area {
     static pin100(v, cap) {
         if (v < -cap) {
             return {wrap: true, next: 100-cap};
-        } else if (v >= (100-cap)) {
+        } else if (v >= 100) {
             return {wrap: true, next: -cap};
         }
         return {wrap: false, next: v};
@@ -53,7 +53,7 @@ export class Area {
 
     // Show or hide the figure.
     setVisible(ok) {
-        this.#img.style.display = ok ? 'flex' : 'none';
+        this.#img.style.visibility = ok ? 'visible' : 'hidden';
     }
 
     // Move the specified sprite (1-indexed) into the viewport.

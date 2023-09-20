@@ -8,12 +8,12 @@
 <div class="logo">
   <img src="/static/logo.svg" width=64 height=64 />
   <span>TailSQL</span>
-</div>{{with .Version}}
-<div class="version">
-  <span>Version: {{.}}</span>
-</div>{{end}}
+</div>
 
-<div id="input">
+<div id="input"><div id="nut"></div>{{with .Version}}
+  <div class="version">
+    <span>Version: {{.}}</span>
+  </div>{{end}}
   <form id="qform" method="GET">
     <textarea name="q" rows=10 cols=90 id="query">{{- .Query -}} </textarea><br />
     <span class="uihint">Hint: Use shift-enter to submit your query</span>

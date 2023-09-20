@@ -191,5 +191,5 @@ div.action {
   height: 32px;
   width: 32px;
   background: url('/static/nut.png') 0px 0px;
-  display: none;
+  visibility: hidden;
 }
