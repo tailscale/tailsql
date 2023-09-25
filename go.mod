@@ -7,11 +7,11 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/klauspost/compress v1.16.7
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
-	github.com/tailscale/setec v0.0.0-20230913214111-d400ed87fcc6
+	github.com/tailscale/setec v0.0.0-20230925234803-f5020161c235
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	honnef.co/go/tools v0.4.5
 	modernc.org/sqlite v1.25.0
-	tailscale.com v1.1.1-0.20230915205838-f6845b10f62f
+	tailscale.com v1.1.1-0.20230920164730-5f4d76c18c6d
 )
 
 require (

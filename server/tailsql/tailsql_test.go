@@ -6,7 +6,6 @@ package tailsql_test
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
@@ -182,8 +181,8 @@ func TestServer(t *testing.T) {
 			DisplayName: "some user",
 		},
 		CapMap: tailcfg.PeerCapMap{
-			"https://tailscale.com/cap/tailsql": []json.RawMessage{
-				json.RawMessage(`{"src":["*"]}`),
+			"https://tailscale.com/cap/tailsql": []tailcfg.RawMessage{
+				`{"src":["*"]}`,
 			},
 		},
 	}

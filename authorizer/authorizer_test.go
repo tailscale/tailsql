@@ -4,7 +4,6 @@
 package authorizer_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/tailscale/tailsql/authorizer"
@@ -19,8 +18,8 @@ var (
 			ID: 1, LoginName: "user@example.com", DisplayName: "Some P. User",
 		},
 		CapMap: tailcfg.PeerCapMap{
-			"https://tailscale.com/cap/tailsql": []json.RawMessage{
-				json.RawMessage(`{"src":["main","alt"]}`),
+			"https://tailscale.com/cap/tailsql": []tailcfg.RawMessage{
+				`{"src":["main","alt"]}`,
 			},
 		},
 	}
@@ -30,8 +29,8 @@ var (
 			ID: 1, LoginName: "user@example.com", DisplayName: "Some P. User",
 		},
 		CapMap: tailcfg.PeerCapMap{
-			"https://tailscale.com/cap/tailsql": []json.RawMessage{
-				json.RawMessage(`{"src":["main"]}`),
+			"https://tailscale.com/cap/tailsql": []tailcfg.RawMessage{
+				`{"src":["main"]}`,
 			},
 		},
 	}

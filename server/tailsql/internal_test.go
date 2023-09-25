@@ -4,7 +4,6 @@
 package tailsql
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
 
@@ -105,8 +104,8 @@ func TestOptions(t *testing.T) {
 				DisplayName: "A. D. Ministratrix",
 			},
 			CapMap: tailcfg.PeerCapMap{
-				tailsqlCap: []json.RawMessage{
-					json.RawMessage(`{"src":["test1","test2"]}`),
+				tailsqlCap: []tailcfg.RawMessage{
+					`{"src":["test1","test2"]}`,
 				},
 			},
 		}
@@ -118,8 +117,8 @@ func TestOptions(t *testing.T) {
 				DisplayName: "P. Ian McWhorker",
 			},
 			CapMap: tailcfg.PeerCapMap{
-				tailsqlCap: []json.RawMessage{
-					json.RawMessage(`{"src":["test2"]}`),
+				tailsqlCap: []tailcfg.RawMessage{
+					`{"src":["test2"]}`,
 				},
 			},
 		}
