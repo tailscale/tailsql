@@ -461,7 +461,7 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 			query = real
 		}
 
-		rows, err := tx.QueryContext(ctx, query)
+		rows, err := tx.QueryContext(fctx, query)
 		if err != nil {
 			return nil, err
 		}
@@ -480,6 +480,8 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 			if len(out.Rows) == maxRowsPerQuery {
 				tooMany = true
 				break
+			} else if fctx.Err() != nil {
+				return nil, fmt.Errorf("scanning row: %w", fctx.Err())
 			}
 			vals := make([]any, len(cols))
 			vptr := make([]any, len(cols))
