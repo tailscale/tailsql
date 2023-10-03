@@ -184,13 +184,17 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 		panic("new database is nil")
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	for _, src := range s.dbs {
 		if src.Source() == source {
+			s.mu.Unlock()
+
+			// Perform the swap outside the service lock, since it may wait if a
+			// query is in-flight and we don't need or want to block the rest of
+			// the UI while that's happening.
 			old := src.swap(db, opts)
 			old.Close()
-			return true
+			return false
 		}
 	}
 	s.dbs = append(s.dbs, &dbHandle{
@@ -199,6 +203,7 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 		label: opts.label(),
 		named: opts.namedQueries(),
 	})
+	s.mu.Unlock()
 	return false
 }
 
