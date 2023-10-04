@@ -1,0 +1,43 @@
+// Example tailsql configuration file.
+// This file is in HuJSON (JWCC) format; plain JSON also works.
+{
+  @{ with .Hostname }@// The tailnet hostname the server should run on.
+  "hostname": "@{.}@",@{ end }@
+  @{ with .LocalState }@
+  // If set, a SQLite database URL to use for the query log.
+  "localState": "@{.}@",@{ end }@
+  @{ with .LocalSource }@
+  // If localState is defined, export a read-only copy of the local state
+  // database as a source with this name.
+  "localSource": "@{.}@",@{ end }@
+  @{ if .Sources }@
+  // Databases that the server will allow queries against.
+  "sources": [@{ range .Sources }@
+    {
+      // The name that selects this database in queries (src=name).
+      "source": "@{ .Source }@",
+
+      // A human-readable description for the database.
+      "label": "@{ .Label }@",
+
+      // The name of the database/sql driver to use for this source.
+      "driver": "@{ .Driver }@",
+      @{ if .Named }@
+      // Named queries supported by this database (q=named:x).
+      "named": {@{ range $name, $query := .Named }@
+        "@{ $name }@": "@{ $query }@",
+      @{ end }@},@{ end }@
+
+      // The database/sql connection string for the database.
+      "url": "@{ .URL }@",
+    },
+  @{ end }@],@{ end }@
+  @{ if .UILinks }@
+  // Additional links to display in the UI.
+  "links": [@{ range .UILinks }@
+    {
+      "anchor": "@{ .Anchor }@",
+      "url": "@{ .URL }@",
+    },@{ end }@
+  ],@{ end }@
+}

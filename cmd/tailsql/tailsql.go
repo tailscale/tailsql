@@ -5,12 +5,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"expvar"
 	"flag"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -21,9 +22,12 @@ import (
 	"github.com/creachadair/ctrl"
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
+	"tailscale.com/atomicfile"
 	"tailscale.com/tsnet"
 	"tailscale.com/tsweb"
 	"tailscale.com/types/logger"
+
+	_ "embed"
 
 	// If you want to support other source types with this tool, you will need
 	// to import other database drivers below.
@@ -197,14 +201,16 @@ func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
 	return tsNode.Close()
 }
 
+//go:embed sample.tmpl
+var sampleConfig string
+
 func generateBasicConfig(path string) error {
-	f, err := os.Create(path)
+	t, err := template.New("sample").Delims("@{", "}@").Parse(sampleConfig)
 	if err != nil {
-		ctrl.Fatalf("Create config: %v", err)
+		ctrl.Fatalf("Parse config template: %v", err)
 	}
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	eerr := enc.Encode(tailsql.Options{
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, tailsql.Options{
 		Hostname:    "tailsql-dev",
 		LocalState:  "tailsql-state.db",
 		LocalSource: "self",
@@ -221,10 +227,17 @@ func generateBasicConfig(path string) error {
 			Anchor: "source code",
 			URL:    "https://github.com/tailscale/tailsql",
 		}},
-	})
-	cerr := f.Close()
-	if err := errors.Join(eerr, cerr); err != nil {
-		ctrl.Fatalf("Write config: %v", err)
+	}); err != nil {
+		ctrl.Fatalf("Generate sample config: %v", err)
+	}
+
+	// Verify that the generated sample is valid, in case the template got broken.
+	//lint:ignore S1030 We clone the data because HuJSON clobbers its input slice.
+	if err := tailsql.UnmarshalOptions([]byte(buf.String()), new(tailsql.Options)); err != nil {
+		ctrl.Fatalf("Verifying sample config: %v", err)
+	}
+	if err := atomicfile.WriteFile(path, buf.Bytes(), 0644); err != nil {
+		ctrl.Fatalf("Writing sample config: %v", err)
 	}
 	log.Printf("Generated sample config in %s", path)
 	return nil
