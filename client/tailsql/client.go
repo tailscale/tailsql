@@ -80,6 +80,19 @@ func QueryJSON[T any](ctx context.Context, c Client, dataSrc, sql string) ([]T, 
 	}
 }
 
+// JSONString is a wrapper type that decodes JSON text encoded as a string
+// value into plain JSON text.
+type JSONString []byte
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface for JSON
+// text encoded inside a JSON string value.
+func (js *JSONString) UnmarshalText(data []byte) error {
+	return json.Unmarshal(data, (*json.RawMessage)(js))
+}
+
+// MarshalText encodes a JSON text into a JSON string value.
+func (js JSONString) MarshalText() ([]byte, error) { return []byte(js), nil }
+
 // Rows is the result of a successful Query call.
 type Rows struct {
 	Columns []string   // column names

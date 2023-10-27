@@ -1,8 +1,10 @@
 package tailsql_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
@@ -140,6 +142,51 @@ func TestClient(t *testing.T) {
 			t.Errorf("Got %+v, want error", rows)
 		} else {
 			t.Logf("Got expected error: %v", err)
+		}
+	})
+}
+
+func TestJSONString(t *testing.T) {
+	var tdata = struct {
+		S string `json:"foo"`
+		Z int    `json:"bar"`
+		B bool   `json:"baz"`
+	}{S: "hello", Z: 1337, B: true}
+
+	tjson, err := json.Marshal(tdata)
+	if err != nil {
+		t.Fatalf("Encode test data: %v", err)
+	}
+
+	t.Run("Encode", func(t *testing.T) {
+		const want = `"{\"foo\":\"hello\",\"bar\":1337,\"baz\":true}"`
+		enc, err := json.Marshal(tailsql.JSONString(tjson))
+		if err != nil {
+			t.Fatalf("Encode failed: %v", err)
+		}
+		if got := string(enc); got != want {
+			t.Errorf("Encode: got %#q, want %#q", got, want)
+		}
+	})
+
+	// Verify that we can round-trip through a string.
+	t.Run("RoundTrip", func(t *testing.T) {
+		enc, err := json.Marshal(struct {
+			V tailsql.JSONString
+		}{V: tjson})
+		if err != nil {
+			t.Fatalf("Encode wrapper: %v", err)
+		}
+
+		var dec struct {
+			V tailsql.JSONString
+		}
+		if err := json.Unmarshal(enc, &dec); err != nil {
+			t.Fatalf("Decode wrapper: %v", err)
+		}
+
+		if !bytes.Equal(dec.V, tjson) {
+			t.Fatalf("Decoded string: got %#q, want %#q", dec.V, tjson)
 		}
 	})
 }
