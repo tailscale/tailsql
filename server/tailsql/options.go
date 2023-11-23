@@ -82,6 +82,12 @@ type Options struct {
 	// by the rule replaces the original string.
 	UIRewriteRules []UIRewriteRule `json:"-"`
 
+	// If non-nil, this function is called to annotate ctx before passing it in
+	// to a database query for the given source. If the callback is nil, or if
+	// it returns nil, ctx is used unmodified. Otherwise the returned value
+	// replaces ctx in the query.
+	QueryContext func(ctx context.Context, src, query string) context.Context `json:"-"`
+
 	// If non-nil, send logs to this logger. If nil, use log.Printf.
 	Logf logger.Logf `json:"-"`
 }

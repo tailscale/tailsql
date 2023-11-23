@@ -114,6 +114,7 @@ type Server struct {
 	rules     []UIRewriteRule
 	authorize func(string, *apitype.WhoIsResponse) error
 	qtimeout  time.Duration
+	qcontext  func(ctx context.Context, src, query string) context.Context
 	logf      logger.Logf
 
 	mu  sync.Mutex
@@ -166,6 +167,7 @@ func NewServer(opts Options) (*Server, error) {
 		rules:     opts.UIRewriteRules,
 		authorize: opts.authorize(),
 		qtimeout:  opts.QueryTimeout.Duration(),
+		qcontext:  opts.QueryContext,
 		logf:      opts.logf(),
 		dbs:       dbs,
 	}, nil
@@ -438,76 +440,77 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 		defer cancel()
 	}
 
-	return runQueryInTx(ctx, h, func(fctx context.Context, tx *sql.Tx) (_ *dbResult, err error) {
-		start := time.Now()
-		var out dbResult
-		defer func() {
-			out.Elapsed = time.Since(start)
-			s.logf("[tailsql] query src=%q query=%q elapsed=%v err=%v",
-				src, query, out.Elapsed.Round(time.Millisecond), err)
+	return runQueryInTx(s.getQueryContext(ctx, src, query), h,
+		func(fctx context.Context, tx *sql.Tx) (_ *dbResult, err error) {
+			start := time.Now()
+			var out dbResult
+			defer func() {
+				out.Elapsed = time.Since(start)
+				s.logf("[tailsql] query src=%q query=%q elapsed=%v err=%v",
+					src, query, out.Elapsed.Round(time.Millisecond), err)
 
-			// Record successful queries in the persistent log.  But don't log
-			// queries to the state database itself.
-			if err == nil && src != s.self {
-				serr := s.state.LogQuery(ctx, caller, src, query)
-				if serr != nil {
-					s.logf("[tailsql] WARNING: Error logging query: %v", serr)
+				// Record successful queries in the persistent log.  But don't log
+				// queries to the state database itself.
+				if err == nil && src != s.self {
+					serr := s.state.LogQuery(ctx, caller, src, query)
+					if serr != nil {
+						s.logf("[tailsql] WARNING: Error logging query: %v", serr)
+					}
 				}
-			}
-		}()
+			}()
 
-		// Check for a named query.
-		if name, ok := strings.CutPrefix(query, "named:"); ok {
-			real, ok := lookupNamedQuery(fctx, name)
-			if !ok {
-				return nil, statusErrorf(http.StatusBadRequest, "named query %q not recognized", name)
+			// Check for a named query.
+			if name, ok := strings.CutPrefix(query, "named:"); ok {
+				real, ok := lookupNamedQuery(fctx, name)
+				if !ok {
+					return nil, statusErrorf(http.StatusBadRequest, "named query %q not recognized", name)
+				}
+				s.logf("[tailsql] resolved named query %q to %#q", name, real)
+				query = real
 			}
-			s.logf("[tailsql] resolved named query %q to %#q", name, real)
-			query = real
-		}
 
-		rows, err := tx.QueryContext(fctx, query)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		cols, err := rows.ColumnTypes()
-		if err != nil {
-			return nil, fmt.Errorf("listing column types: %w", err)
-		}
-		for _, col := range cols {
-			out.Columns = append(out.Columns, col.Name())
-		}
-
-		var tooMany bool
-		for rows.Next() && !tooMany {
-			if len(out.Rows) == maxRowsPerQuery {
-				tooMany = true
-				break
-			} else if fctx.Err() != nil {
-				return nil, fmt.Errorf("scanning row: %w", fctx.Err())
+			rows, err := tx.QueryContext(fctx, query)
+			if err != nil {
+				return nil, err
 			}
-			vals := make([]any, len(cols))
-			vptr := make([]any, len(cols))
-			for i := range cols {
-				vptr[i] = &vals[i]
-			}
-			if err := rows.Scan(vptr...); err != nil {
-				return nil, fmt.Errorf("scanning row: %w", err)
-			}
-			out.Rows = append(out.Rows, vals)
-		}
-		if err := rows.Err(); err != nil {
-			return nil, fmt.Errorf("scanning rows: %w", err)
-		}
-		out.NumRows = len(out.Rows)
+			defer rows.Close()
 
-		if tooMany {
-			return &out, errTooManyRows
-		}
-		return &out, nil
-	})
+			cols, err := rows.ColumnTypes()
+			if err != nil {
+				return nil, fmt.Errorf("listing column types: %w", err)
+			}
+			for _, col := range cols {
+				out.Columns = append(out.Columns, col.Name())
+			}
+
+			var tooMany bool
+			for rows.Next() && !tooMany {
+				if len(out.Rows) == maxRowsPerQuery {
+					tooMany = true
+					break
+				} else if fctx.Err() != nil {
+					return nil, fmt.Errorf("scanning row: %w", fctx.Err())
+				}
+				vals := make([]any, len(cols))
+				vptr := make([]any, len(cols))
+				for i := range cols {
+					vptr[i] = &vals[i]
+				}
+				if err := rows.Scan(vptr...); err != nil {
+					return nil, fmt.Errorf("scanning row: %w", err)
+				}
+				out.Rows = append(out.Rows, vals)
+			}
+			if err := rows.Err(); err != nil {
+				return nil, fmt.Errorf("scanning rows: %w", err)
+			}
+			out.NumRows = len(out.Rows)
+
+			if tooMany {
+				return &out, errTooManyRows
+			}
+			return &out, nil
+		})
 }
 
 // queryMeta handles meta-queries for internal state.
@@ -609,4 +612,14 @@ func (s *Server) getHandles() []*dbHandle {
 	// It is safe to return the slice because we never remove any elements, new
 	// data are only ever appended to the end.
 	return s.dbs
+}
+
+// getQueryContext decorates ctx if necessary using the context hook for src and query.
+func (s *Server) getQueryContext(ctx context.Context, src, query string) context.Context {
+	if s.qcontext != nil {
+		if qctx := s.qcontext(ctx, src, query); qctx != nil {
+			return qctx
+		}
+	}
+	return ctx
 }

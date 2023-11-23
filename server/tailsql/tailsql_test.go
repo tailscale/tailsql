@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/tailscale/setec/client/setec"
 	"github.com/tailscale/setec/setectest"
 	"github.com/tailscale/tailsql/authorizer"
@@ -186,6 +187,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 	}
+	var contextHookData [2]string
 	s, err := tailsql.NewServer(tailsql.Options{
 		LocalClient: fc,
 		UILinks: []tailsql.UILink{
@@ -193,7 +195,12 @@ func TestServer(t *testing.T) {
 		},
 		UIRewriteRules: testUIRules,
 		Authorize:      authorizer.PeerCaps(nil),
-		Logf:           t.Logf,
+		QueryContext: func(ctx context.Context, src, query string) context.Context {
+			contextHookData[0] = src
+			contextHookData[1] = query
+			return ctx
+		},
+		Logf: t.Logf,
 	})
 	if err != nil {
 		t.Fatalf("NewServer: unexpected error: %v", err)
@@ -209,6 +216,15 @@ func TestServer(t *testing.T) {
 	htest := httptest.NewServer(s.NewMux())
 	defer htest.Close()
 	cli := htest.Client()
+
+	t.Run("ContextHook", func(t *testing.T) {
+		q := url.Values{"q": {"select count(*) from users"}}
+		url := htest.URL + "?" + q.Encode()
+		mustGet(t, cli, url)
+		if diff := cmp.Diff(contextHookData, [2]string{"main", "select count(*) from users"}); diff != "" {
+			t.Errorf("Context hook result (-got, +want):\n%s", diff)
+		}
+	})
 
 	t.Run("UI", func(t *testing.T) {
 		q := make(url.Values)
