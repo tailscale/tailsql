@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tailscale/setec/client/setec"
@@ -26,12 +27,12 @@ import (
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
 	"golang.org/x/exp/slices"
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
 
 	_ "embed"
-
-	_ "modernc.org/sqlite"
 )
 
 //go:embed testdata/init.sql
@@ -460,4 +461,41 @@ func TestAuth(t *testing.T) {
 	t.Run("GroupMember", func(t *testing.T) {
 		mustCall(t, htest.URL+"?src=special", http.StatusOK)
 	})
+}
+
+// Verify that context cancellation is correctly propagated.
+// This test is specific to SQLite, but the point is to make sure the context
+// plumbing in tailsql is correct.
+func TestQueryTimeout(t *testing.T) {
+	_, db := mustInitSQLite(t)
+
+	// This test query runs forever until interrupted.
+	const testQuery = `WITH RECURSIVE inf(n) AS (
+    SELECT 1
+    UNION ALL
+    SELECT n+1 FROM inf
+) SELECT * FROM inf WHERE n = 0`
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		defer cancel()
+
+		var sqerr *sqlite.Error
+		rows, err := db.QueryContext(ctx, testQuery)
+		if err == nil {
+			t.Errorf("QueryContext: got rows=%v, want error", rows)
+		} else if !errors.As(err, &sqerr) || sqerr.Code() != sqlitelib.SQLITE_INTERRUPT {
+			t.Errorf("Got error %v, wanted sqlite.Error code %d", err, sqlitelib.SQLITE_INTERRUPT)
+		}
+	}()
+
+	select {
+	case <-done:
+		// OK
+	case <-time.After(30 * time.Second):
+		t.Fatal("Timeout waiting for query to end")
+	}
 }
