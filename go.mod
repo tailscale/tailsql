@@ -11,7 +11,7 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	honnef.co/go/tools v0.4.6
 	modernc.org/sqlite v1.25.0
-	tailscale.com v1.1.1-0.20231130220427-db39a43f063a
+	tailscale.com v1.1.1-0.20231215172942-3a635db06e61
 )
 
 require (
@@ -79,12 +79,12 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/safchain/ethtool v0.3.0 // indirect
-	github.com/tailscale/certstore v0.1.1-0.20231020161753-77811a65f4ff // indirect
+	github.com/tailscale/certstore v0.1.1-0.20231202035212-d3fa0460f47e // indirect
 	github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55 // indirect
 	github.com/tailscale/golang-x-crypto v0.0.0-20230713185742-f0b76a10a08e // indirect
 	github.com/tailscale/goupnp v1.0.1-0.20210804011211-c64d0f06ea05 // indirect
 	github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85 // indirect
-	github.com/tailscale/web-client-prebuilt v0.0.0-20231118024040-94653e885f8e // indirect
+	github.com/tailscale/web-client-prebuilt v0.0.0-20231213172531-a4fa669015b2 // indirect
 	github.com/tailscale/wireguard-go v0.0.0-20231121184858-cc193a0b3272 // indirect
 	github.com/tcnksm/go-httpstat v0.2.0 // indirect
 	github.com/tink-crypto/tink-go/v2 v2.0.0 // indirect
@@ -99,7 +99,7 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
