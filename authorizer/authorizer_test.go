@@ -11,6 +11,8 @@ import (
 	"tailscale.com/tailcfg"
 )
 
+const tailsqlCap = "tailscale.com/cap/tailsql"
+
 var (
 	taggedNode = &apitype.WhoIsResponse{
 		Node: &tailcfg.Node{Name: "fake.ts.net", Tags: []string{"tag:special"}},
@@ -18,7 +20,7 @@ var (
 			ID: 1, LoginName: "user@example.com", DisplayName: "Some P. User",
 		},
 		CapMap: tailcfg.PeerCapMap{
-			"https://tailscale.com/cap/tailsql": []tailcfg.RawMessage{
+			tailsqlCap: []tailcfg.RawMessage{
 				`{"src":["main","alt"]}`,
 			},
 		},
@@ -29,15 +31,15 @@ var (
 			ID: 1, LoginName: "user@example.com", DisplayName: "Some P. User",
 		},
 		CapMap: tailcfg.PeerCapMap{
-			"https://tailscale.com/cap/tailsql": []tailcfg.RawMessage{
+			tailsqlCap: []tailcfg.RawMessage{
 				`{"src":["main"]}`,
 			},
 		},
 	}
 )
 
-func TestPeerCaps(t *testing.T) {
-	auth := authorizer.PeerCaps(t.Logf)
+func TestACLGrants(t *testing.T) {
+	auth := authorizer.ACLGrants(t.Logf)
 	tests := []struct {
 		src string
 		rsp *apitype.WhoIsResponse

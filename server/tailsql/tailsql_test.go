@@ -183,7 +183,7 @@ func TestServer(t *testing.T) {
 			DisplayName: "some user",
 		},
 		CapMap: tailcfg.PeerCapMap{
-			"https://tailscale.com/cap/tailsql": []tailcfg.RawMessage{
+			"tailscale.com/cap/tailsql": []tailcfg.RawMessage{
 				`{"src":["*"]}`,
 			},
 		},
@@ -195,7 +195,7 @@ func TestServer(t *testing.T) {
 			{Anchor: testAnchor, URL: testURL},
 		},
 		UIRewriteRules: testUIRules,
-		Authorize:      authorizer.PeerCaps(nil),
+		Authorize:      authorizer.ACLGrants(nil),
 		QueryContext: func(ctx context.Context, src, query string) context.Context {
 			contextHookData[0] = src
 			contextHookData[1] = query

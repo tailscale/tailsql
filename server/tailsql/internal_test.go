@@ -76,7 +76,7 @@ func TestOptions(t *testing.T) {
 	if diff := cmp.Diff(want, opts); diff != "" {
 		t.Errorf("Parsed options (-want, +got)\n%s", diff)
 	}
-	opts.Authorize = authorizer.PeerCaps(nil)
+	opts.Authorize = authorizer.ACLGrants(nil)
 
 	// Test that we can populate options from the config.
 	t.Run("Options", func(t *testing.T) {
@@ -96,6 +96,8 @@ func TestOptions(t *testing.T) {
 
 	// Test that the authorizer works.
 	t.Run("Authorize", func(t *testing.T) {
+		const tailsqlCap = "tailscale.com/cap/tailsql"
+
 		admin := &apitype.WhoIsResponse{
 			Node: new(tailcfg.Node), // must be non-nil in a valid response
 			UserProfile: &tailcfg.UserProfile{

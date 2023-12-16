@@ -15,15 +15,17 @@ import (
 
 // tailsqlCap is the default name of the tailsql capability.
 const tailsqlCap = "tailscale.com/cap/tailsql"
-const tailsqlCapHTTP = "https://" + tailsqlCap
 
-// PeerCaps returns an authorization function that uses peer capabilities from
-// the tailnet to check access for query sources.
-// If logf == nil, logs are sent to log.Printf.
-//
-// TODO(creachadair): As of 10-Aug-2023 peer capabilities are an experimental
-// feature that only works on tailnets where enaled.
+// PeerCaps is a temporary migration alias for ACLGrants.
+// Deprecated: Use ACLGrants directly for new code.
 func PeerCaps(logf logger.Logf) func(string, *apitype.WhoIsResponse) error {
+	return ACLGrants(logf)
+}
+
+// ACLGrants returns an authorization function that uses ACL grants from the
+// tailnet to check access for query sources.
+// If logf == nil, logs are sent to log.Printf.
+func ACLGrants(logf logger.Logf) func(string, *apitype.WhoIsResponse) error {
 	if logf == nil {
 		logf = log.Printf
 	}
@@ -45,7 +47,7 @@ func PeerCaps(logf logger.Logf) func(string, *apitype.WhoIsResponse) error {
 		// result without the prefix, try again with it. Remove this once the
 		// policy has been updated on the server side.
 		if err == nil && len(rules) == 0 {
-			rules, err = tailcfg.UnmarshalCapJSON[rule](who.CapMap, tailsqlCapHTTP)
+			rules, err = tailcfg.UnmarshalCapJSON[rule](who.CapMap, "https://"+tailsqlCap)
 		}
 		if err != nil || len(rules) == 0 {
 			return errors.New("not authorized for access tailsql")

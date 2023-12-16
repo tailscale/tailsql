@@ -199,8 +199,6 @@ func (o Options) logf() logger.Logf {
 	return o.Logf
 }
 
-const tailsqlCap = "https://tailscale.com/cap/tailsql"
-
 // authorize returns an authorization callback based on the Access field of o.
 func (o Options) authorize() func(src string, who *apitype.WhoIsResponse) error {
 	if o.Authorize != nil {
