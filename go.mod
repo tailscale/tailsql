@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/klauspost/compress v1.17.5
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
-	github.com/tailscale/setec v0.0.0-20240102233422-ba738f8ab5a0
+	github.com/tailscale/setec v0.0.0-20240210224034-70d1ccdb719b
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 	honnef.co/go/tools v0.4.6
 	modernc.org/sqlite v1.28.0
