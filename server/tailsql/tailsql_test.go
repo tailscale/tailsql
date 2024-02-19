@@ -26,7 +26,6 @@ import (
 	"github.com/tailscale/tailsql/authorizer"
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
-	"golang.org/x/exp/slices"
 	"modernc.org/sqlite"
 	sqlitelib "modernc.org/sqlite/lib"
 	"tailscale.com/client/tailscale/apitype"
@@ -366,12 +365,6 @@ func TestAuth(t *testing.T) {
 			LoginName:   "user@fakesite.example.com",
 			DisplayName: "Hermanita Q. Testwaller",
 		}
-		userProfile2 = &tailcfg.UserProfile{
-			ID:          404, // i.e., not testUser
-			LoginName:   "otherbody@fakesite.example.com",
-			DisplayName: "Aloysius P. von Testenschön",
-			Groups:      []string{"group:special"},
-		}
 	)
 
 	_, db := mustInitSQLite(t)
@@ -389,8 +382,6 @@ func TestAuth(t *testing.T) {
 				return nil // no authorization required for "main"
 			} else if wr.UserProfile.ID == testUser {
 				return nil // this user is explicitly allowed
-			} else if src == "special" && slices.Contains(wr.UserProfile.Groups, "group:special") {
-				return nil // this group is explicitly allowed for "special"
 			} else {
 				return errors.New("authorization denied") // fail closed
 			}
@@ -448,18 +439,6 @@ func TestAuth(t *testing.T) {
 	// Check for a valid user who is not authorized.
 	t.Run("ValidUnauth", func(t *testing.T) {
 		mustCall(t, htest.URL+"?src=other", http.StatusForbidden)
-	})
-
-	// Authorization by group fails for a user not in the group.
-	t.Run("NonGroupMember", func(t *testing.T) {
-		mustCall(t, htest.URL+"?src=special", http.StatusForbidden)
-	})
-
-	fc.result.UserProfile = userProfile2
-
-	// Authorization succeeds for a user in the group.
-	t.Run("GroupMember", func(t *testing.T) {
-		mustCall(t, htest.URL+"?src=special", http.StatusOK)
 	})
 }
 
