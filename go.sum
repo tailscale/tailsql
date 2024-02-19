@@ -193,8 +193,8 @@ github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85 h1:zrsUcqrG2uQ
 github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85/go.mod h1:NzVQi3Mleb+qzq8VmcWpSkcSYxXIg0DkI6XDzpVkhJ0=
 github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4 h1:Gz0rz40FvFVLTBk/K8UNAenb36EbDSnh+q7Z9ldcC8w=
 github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4/go.mod h1:phI29ccmHQBc+wvroosENp1IF9195449VDnFDhJ4rJU=
-github.com/tailscale/setec v0.0.0-20240210224034-70d1ccdb719b h1:7l8haUsGp91CuYfVQTt7z/qmubzaDYCv+4QwaSfzMIc=
-github.com/tailscale/setec v0.0.0-20240210224034-70d1ccdb719b/go.mod h1:6aROaLnIr5yo1jhQ42z/vOjNcXaQRuCQZivWroLHqjo=
+github.com/tailscale/setec v0.0.0-20240219171334-c0803489a3a7 h1:fn/TIBXAQig5wiESt4XC6CYXRR0jzz6z6j+/XlJ4HM0=
+github.com/tailscale/setec v0.0.0-20240219171334-c0803489a3a7/go.mod h1:Mayqq+tl9DwM0g2aQ70B2SH6VFMRLZZJtLYcQllPbFA=
 github.com/tailscale/web-client-prebuilt v0.0.0-20240208184856-443a64766f61 h1:G6/VUGQkHbBffO0s3f51DThcHCWrShlWklcS4Zxh5BU=
 github.com/tailscale/web-client-prebuilt v0.0.0-20240208184856-443a64766f61/go.mod h1:agQPE6y6ldqCOui2gkIh7ZMztTkIQKH049tv8siLuNQ=
 github.com/tailscale/wf v0.0.0-20240214030419-6fbb0a674ee6 h1:l10Gi6w9jxvinoiq15g8OToDdASBni4CyJOdHY1Hr8M=

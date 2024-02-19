@@ -7,8 +7,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/klauspost/compress v1.17.5
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
-	github.com/tailscale/setec v0.0.0-20240210224034-70d1ccdb719b
-	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
+	github.com/tailscale/setec v0.0.0-20240219171334-c0803489a3a7
 	honnef.co/go/tools v0.4.6
 	modernc.org/sqlite v1.28.0
 	tailscale.com v1.1.1-0.20240217183311-794af40f68e0
@@ -94,6 +93,7 @@ require (
 	go4.org/mem v0.0.0-20220726221520-4f986261bf13 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
