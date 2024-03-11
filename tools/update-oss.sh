@@ -15,7 +15,7 @@ repo=tailscale/corp
 # The module to update.
 module=tailscale.com
 
-cd "$(dirname ${BASH_SOURCE[0]})/.."
+cd "$(git rev-parse --show-toplevel)"
 if ! git diff --quiet ; then
     echo ">> WARNING: The working directory is not clean." 1>&2
     echo "   Commit or stash your changes first." 1>&2
