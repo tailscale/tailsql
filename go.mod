@@ -10,7 +10,7 @@ require (
 	github.com/tailscale/setec v0.0.0-20240219171334-c0803489a3a7
 	honnef.co/go/tools v0.4.6
 	modernc.org/sqlite v1.28.0
-	tailscale.com v1.61.0-pre.0.20240311120500-7429e8912acb
+	tailscale.com v1.61.0-pre.0.20240313133645-f12d2557f94a
 )
 
 require (
