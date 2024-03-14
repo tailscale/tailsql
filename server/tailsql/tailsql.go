@@ -114,7 +114,6 @@ type Server struct {
 	rules     []UIRewriteRule
 	authorize func(string, *apitype.WhoIsResponse) error
 	qtimeout  time.Duration
-	qcontext  func(ctx context.Context, src, query string) context.Context
 	logf      logger.Logf
 
 	mu  sync.Mutex
@@ -167,7 +166,6 @@ func NewServer(opts Options) (*Server, error) {
 		rules:     opts.UIRewriteRules,
 		authorize: opts.authorize(),
 		qtimeout:  opts.QueryTimeout.Duration(),
-		qcontext:  opts.QueryContext,
 		logf:      opts.logf(),
 		dbs:       dbs,
 	}, nil
@@ -434,7 +432,7 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 		defer cancel()
 	}
 
-	return runQueryInTx(s.getQueryContext(ctx, src, query), h,
+	return runQueryInTx(ctx, h,
 		func(fctx context.Context, tx *sql.Tx) (_ *dbResult, err error) {
 			start := time.Now()
 			var out dbResult
@@ -611,14 +609,4 @@ func (s *Server) getHandles() []*dbHandle {
 	// It is safe to return the slice because we never remove any elements, new
 	// data are only ever appended to the end.
 	return s.dbs
-}
-
-// getQueryContext decorates ctx if necessary using the context hook for src and query.
-func (s *Server) getQueryContext(ctx context.Context, src, query string) context.Context {
-	if s.qcontext != nil {
-		if qctx := s.qcontext(ctx, src, query); qctx != nil {
-			return qctx
-		}
-	}
-	return ctx
 }
