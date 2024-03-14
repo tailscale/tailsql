@@ -186,17 +186,12 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 		panic("new database is nil")
 	}
 	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	for _, src := range s.dbs {
 		if src.Source() == source {
-			s.mu.Unlock()
-
-			// Perform the swap outside the service lock, since it may wait if a
-			// query is in-flight and we don't need or want to block the rest of
-			// the UI while that's happening.
-			old := src.swap(db, opts)
-			old.Close()
-			return false
+			src.swap(db, opts)
+			return true
 		}
 	}
 	s.dbs = append(s.dbs, &dbHandle{
@@ -205,7 +200,6 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 		label: opts.label(),
 		named: opts.namedQueries(),
 	})
-	s.mu.Unlock()
 	return false
 }
 
@@ -608,6 +602,11 @@ func (s *Server) checkAuth(w http.ResponseWriter, r *http.Request, src string) (
 func (s *Server) getHandles() []*dbHandle {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Check for pending updates.
+	for _, h := range s.dbs {
+		h.tryUpdate()
+	}
 
 	// It is safe to return the slice because we never remove any elements, new
 	// data are only ever appended to the end.

@@ -156,6 +156,11 @@ func runQueryInTx[T any](ctx context.Context, h *dbHandle, query func(context.Co
 		out, err = query(fctx, tx)
 		return err
 	})
+
+	// Check for updates. If this is the last query in flight and there is an
+	// update, this will succeed; otherwise some other query holds the lock and
+	// will succeed later.
+	h.tryUpdate()
 	return out, err
 }
 

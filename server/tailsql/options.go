@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tailscale/hujson"
@@ -286,6 +287,11 @@ type dbHandle struct {
 	src    string
 	driver string
 
+	// If not nil, the value of this field is a database update that arrived
+	// while the handle was busy running a query. The concrete type is *dbUpdate
+	// once initialized.
+	update atomic.Value
+
 	// mu protects the fields below.
 	// Hold shared to read the label and issue queries against db.
 	// Hold exclusive to replace or close db or to update label.
@@ -311,10 +317,43 @@ func (h *dbHandle) handleUpdates(name string, w setec.Watcher, logf logger.Logf)
 		}
 		logf("[tailsql] opened new connection for source %q", h.src)
 		h.mu.Lock()
+		// Close the existing active handle.
 		h.db.Close()
+		// If there's a pending update, close it too.
+		if up := h.checkUpdate(); up != nil {
+			up.newDB.Close()
+		}
 		h.db = db
 		h.mu.Unlock()
 	}
+}
+
+// checkUpdate returns nil if there is no pending update, otherwise it swaps
+// out the pending database update and returns it.
+func (h *dbHandle) checkUpdate() *dbUpdate {
+	if up := h.update.Swap((*dbUpdate)(nil)); up != nil {
+		return up.(*dbUpdate)
+	}
+	return nil
+}
+
+// tryUpdate checks whether h is busy with a query. If not, and there is a
+// handle update pending, tryUpdate applies it.
+func (h *dbHandle) tryUpdate() {
+	if h.mu.TryLock() { // if not, the handle is busy; try again later
+		defer h.mu.Unlock()
+		if up := h.checkUpdate(); up != nil {
+			h.applyUpdateLocked(up)
+		}
+	}
+}
+
+// applyUpdateLocked applies up to h, which must be locked exclusively.
+func (h *dbHandle) applyUpdateLocked(up *dbUpdate) {
+	h.label = up.label
+	h.named = up.named
+	h.db.Close()
+	h.db = up.newDB
 }
 
 // Source returns the source name defined for h.
@@ -383,23 +422,44 @@ func lookupNamedQuery(ctx context.Context, name string) (string, bool) {
 }
 
 // swap locks the handle, swaps the current contents of the handle with newDB
-// and newLabel, and returns the original value. The caller is responsible for
+// and newLabel, and closes the original value. The caller is responsible for
 // closing a database handle when it is no longer in use.  It will panic if
 // newDB == nil, or if h is closed.
-func (h *dbHandle) swap(newDB *sql.DB, newOpts *DBOptions) *sql.DB {
+func (h *dbHandle) swap(newDB *sql.DB, newOpts *DBOptions) {
 	if newDB == nil {
 		panic("new database is nil")
 	}
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	old := h.db
-	if old == nil {
-		panic("handle is closed")
+
+	up := &dbUpdate{
+		newDB: newDB,
+		label: newOpts.label(),
+		named: newOpts.namedQueries(),
 	}
-	h.db = newDB
-	h.label = newOpts.label()
-	h.named = newOpts.namedQueries()
-	return old
+
+	// If the handle is not busy, do the swap now.
+	if h.mu.TryLock() {
+		defer h.mu.Unlock()
+		if h.db == nil {
+			panic("handle is closed")
+		}
+		h.applyUpdateLocked(up)
+		return
+	}
+
+	// Reaching here, the handle is busy on a query. Record an update to be
+	// plumbed in later. It's possible we already had a pending update -- if
+	// that happens close out the old one.
+	if old := h.update.Swap(up); old != nil {
+		old.(*dbUpdate).newDB.Close()
+	}
+}
+
+// A dbUpdate is an open database handle, label, and set of named queries that
+// are ready to be installed in a database handle.
+type dbUpdate struct {
+	newDB *sql.DB
+	label string
+	named map[string]string
 }
 
 // close closes the handle, calling Close on the underlying database and
