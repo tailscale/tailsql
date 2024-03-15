@@ -444,7 +444,9 @@ func (h *dbHandle) swap(newDB *sql.DB, newOpts *DBOptions) {
 	// plumbed in later. It's possible we already had a pending update -- if
 	// that happens close out the old one.
 	if old := h.update.Swap(up); old != nil {
-		old.(*dbUpdate).newDB.Close()
+		if up := old.(*dbUpdate); up != nil {
+			up.newDB.Close()
+		}
 	}
 }
 
