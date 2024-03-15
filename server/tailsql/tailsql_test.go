@@ -25,12 +25,12 @@ import (
 	"github.com/tailscale/tailsql/authorizer"
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
-	"modernc.org/sqlite"
-	sqlitelib "modernc.org/sqlite/lib"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
 
 	_ "embed"
+
+	_ "modernc.org/sqlite"
 )
 
 //go:embed testdata/init.sql
@@ -446,12 +446,11 @@ func TestQueryTimeout(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 		defer cancel()
 
-		var sqerr *sqlite.Error
 		rows, err := db.QueryContext(ctx, testQuery)
 		if err == nil {
 			t.Errorf("QueryContext: got rows=%v, want error", rows)
-		} else if !errors.As(err, &sqerr) || sqerr.Code() != sqlitelib.SQLITE_INTERRUPT {
-			t.Errorf("Got error %v, wanted sqlite.Error code %d", err, sqlitelib.SQLITE_INTERRUPT)
+		} else if !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("Got error %v, wanted %v", err, context.DeadlineExceeded)
 		}
 	}()
 
