@@ -286,6 +286,7 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
 	http.SetCookie(w, siteAccessCookie)
 	w.Header().Set("Content-Security-Policy", contentSecurityPolicy)
+	w.Header().Set("X-Frame-Options", "DENY")
 
 	// If a non-empty query is present, require either a site access cookie or a
 	// no-browsers header.
