@@ -10,11 +10,18 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/tailscale/squibble"
+
 	_ "embed"
 )
 
 //go:embed state-schema.sql
 var localStateSchema string
+
+// schema is the schema migrator for the local state database.
+var schema = &squibble.Schema{
+	Current: localStateSchema,
+}
 
 // localState represetns a local database used by the service to track optional
 // state information while running.
@@ -27,7 +34,7 @@ type localState struct {
 
 // newLocalState constructs a new LocalState helper using the given database.
 func newLocalState(db *sql.DB) (*localState, error) {
-	if _, err := db.Exec(localStateSchema); err != nil {
+	if err := schema.Apply(context.Background(), db); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("initializing schema: %w", err)
 	}

@@ -60,8 +60,8 @@ github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/creachadair/ctrl v0.1.1 h1:sztvK/haLnCSL1IY4mFxEgg5ksAvQMRUFcjB0EeuGY0=
 github.com/creachadair/ctrl v0.1.1/go.mod h1:QORxQsErPqDEuQxtRDa907Chq+IwJUkMAhkHFsphops=
-github.com/creachadair/mds v0.12.2 h1:CyJUaInwFnLUcMgJjVMLG3qYDziSbaY1KXBCvsLrTwQ=
-github.com/creachadair/mds v0.12.2/go.mod h1:4vrFYUzTXMJpMBU+OA292I6IUxKWCCfZkgXg+/kBZMo=
+github.com/creachadair/mds v0.13.3 h1:OqXNRorXKsuvfjor+0ixtrpA4IINApH8zgm23XLlngk=
+github.com/creachadair/mds v0.13.3/go.mod h1:4vrFYUzTXMJpMBU+OA292I6IUxKWCCfZkgXg+/kBZMo=
 github.com/creack/pty v1.1.21 h1:1/QdRyBaHHJP61QkWMXlOIBfsgdDeeKfK8SYVUWJKf0=
 github.com/creack/pty v1.1.21/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -195,6 +195,8 @@ github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4 h1:Gz0rz40FvFVL
 github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4/go.mod h1:phI29ccmHQBc+wvroosENp1IF9195449VDnFDhJ4rJU=
 github.com/tailscale/setec v0.0.0-20240314234648-9da8e7407257 h1:6WsbDYsikRNmmbfZoRoyIEA9tfl0aspPAE0t7nBj2B4=
 github.com/tailscale/setec v0.0.0-20240314234648-9da8e7407257/go.mod h1:hrq01/0LUDZf4mMkcZ7Ovmy33jvCi4RpESpb9kPxV6E=
+github.com/tailscale/squibble v0.0.0-20240320220840-ed9da9df746c h1:KuVHSeCBwIxKURy8VF662341vPMZ0AID4stUeLUVkTs=
+github.com/tailscale/squibble v0.0.0-20240320220840-ed9da9df746c/go.mod h1:L4vAazMfQly5jvYDnytYIVc1ej6OaHw2hGV7ECRfyNw=
 github.com/tailscale/web-client-prebuilt v0.0.0-20240226180453-5db17b287bf1 h1:tdUdyPqJ0C97SJfjB9tW6EylTtreyee9C44de+UBG0g=
 github.com/tailscale/web-client-prebuilt v0.0.0-20240226180453-5db17b287bf1/go.mod h1:agQPE6y6ldqCOui2gkIh7ZMztTkIQKH049tv8siLuNQ=
 github.com/tailscale/wf v0.0.0-20240214030419-6fbb0a674ee6 h1:l10Gi6w9jxvinoiq15g8OToDdASBni4CyJOdHY1Hr8M=

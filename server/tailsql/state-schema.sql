@@ -1,5 +1,4 @@
 -- Local state schema.
-PRAGMA foreign_keys = on;
 
 -- Unique queries by spelling.
 CREATE TABLE IF NOT EXISTS queries (
