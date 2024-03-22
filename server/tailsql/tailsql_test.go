@@ -384,7 +384,12 @@ func TestAuth(t *testing.T) {
 	cli := htest.Client()
 
 	mustCall := func(t *testing.T, url string, want int) {
-		rsp, err := cli.Get(url)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			t.Fatalf("New request for %q: %v", url, err)
+		}
+		req.Header.Set("Sec-Tailsql", "ok")
+		rsp, err := cli.Do(req)
 		if err != nil {
 			t.Fatalf("Get %q: unexpected error: %v", url, err)
 		}
@@ -393,6 +398,7 @@ func TestAuth(t *testing.T) {
 			t.Errorf("Get %q: got %d, want %d", url, got, want)
 		}
 	}
+	testQuery := url.Values{"q": {"select 'ok'"}}.Encode()
 
 	// Check for a user who is not logged in.
 	t.Run("NotLogged", func(t *testing.T) {
@@ -405,24 +411,27 @@ func TestAuth(t *testing.T) {
 		UserProfile: userProfile1,
 	}
 
-	// Check for a response for a tagged node not granted access by
-	// capabilities.
-	t.Run("TaggedNode", func(t *testing.T) {
-		mustCall(t, htest.URL, http.StatusForbidden)
+	// A tagged node cannot query a source it's not granted.
+	// However, anyone can get the UI with no query.
+	t.Run("TaggedNode/Query", func(t *testing.T) {
+		mustCall(t, htest.URL+"?"+testQuery, http.StatusForbidden)
+	})
+	t.Run("TaggedNode/UI", func(t *testing.T) {
+		mustCall(t, htest.URL, http.StatusOK)
 	})
 
 	fc.result.Node = untaggedNode
 
 	// Check for a valid user who is authorized.
 	t.Run("ValidAuth", func(t *testing.T) {
-		mustCall(t, htest.URL, http.StatusOK)
+		mustCall(t, htest.URL+"?"+testQuery, http.StatusOK)
 	})
 
 	fc.result.UserProfile.ID = 678910
 
 	// Check for a valid user who is not authorized.
 	t.Run("ValidUnauth", func(t *testing.T) {
-		mustCall(t, htest.URL+"?src=other", http.StatusForbidden)
+		mustCall(t, htest.URL+"?src=other&"+testQuery, http.StatusForbidden)
 	})
 }
 

@@ -242,7 +242,7 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	caller, isAuthorized := s.checkAuth(w, r, src)
+	caller, isAuthorized := s.checkAuth(w, r, src, query)
 	if !isAuthorized {
 		authErrorCount.Add(1)
 		return
@@ -570,7 +570,7 @@ func (s *Server) dbHandleForSource(src string) *dbHandle {
 // given source.  If the caller does not have access, checkAuth logs an error
 // to w and returns false.  The reported caller name will be "" if no caller
 // can be identified.
-func (s *Server) checkAuth(w http.ResponseWriter, r *http.Request, src string) (string, bool) {
+func (s *Server) checkAuth(w http.ResponseWriter, r *http.Request, src, query string) (string, bool) {
 	// If there is no local client, allow everything.
 	if s.lc == nil {
 		return "", true
@@ -588,6 +588,12 @@ func (s *Server) checkAuth(w http.ResponseWriter, r *http.Request, src string) (
 		caller = whois.Node.Name
 	} else {
 		caller = whois.UserProfile.LoginName
+	}
+
+	// If the caller wants the UI and didn't send a query, allow it.
+	// The source does not matter when there is no query.
+	if r.URL.Path == "/" && query == "" {
+		return caller, true
 	}
 	if err := s.authorize(src, whois); err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
