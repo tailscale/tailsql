@@ -2,10 +2,11 @@
   --text-body: #000;
   --text-light: #666;
   --bg-body: #fff;
-  --bg-error: #fcc;
+  --bg-error: #fec;
+  --bg-error-label: #dba;
   --cell-border: #444;
-  --bg-colname: #cce;
-  --btn-focus: #cce;
+  --bg-colname: #eef;
+  --btn-focus: #ddf;
   --body-font: -apple-system, system-ui, Helvetica, Arial, sans-serif;
 }
 
@@ -36,15 +37,15 @@ textarea {
 }
 .meta span {
   padding: 0.7rem 1rem;
-  background: #eee;
+  flex: 1 1 min-content;
+  border: thin solid grey;
 }
 .meta span:not(:first-of-type) {
   text-align: center;
-  min-width: 10%;
-  border-left: 3px dotted grey;
 }
 .meta span.label {
   font-weight: 700;
+  flex-grow: 0;
   background: var(--bg-colname);
 }
 
@@ -71,25 +72,29 @@ div.error {
 }
 .error span {
   padding: 0.5rem;
+  flex: 1 1 min-content;
+  background: var(--bg-error);
 }
 .error span:first-of-type {
-  background: var(--bg-error);
+  background: var(--bg-error-label);
+  flex-grow: 0;
   font-weight: 700;
 }
 
 .output table  {
-  border: 1px dotted var(--cell-border);
-  min-width: 20%;
+  min-width: 25%;
+  border-spacing: 1px;
 }
 .output td, .output th {
-  border: 1px solid var(--cell-border);
+  border: 1px dotted var(--cell-border);
   min-width: fit-content(10%);
   font-size: 80%;
-  padding: 0.1rem 0.5rem;
+  padding: 0.2rem 0.5rem;
 }
 .output th {
   padding: 0.5rem;
   background: var(--bg-colname);
+  border-style: solid;
 }
 
 .logo {
