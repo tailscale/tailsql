@@ -591,7 +591,7 @@ func (s *Server) checkAuth(w http.ResponseWriter, r *http.Request, src, query st
 	}
 
 	// If the caller wants the UI and didn't send a query, allow it.
-	// The sources does not matter when there is no query.
+	// The source does not matter when there is no query.
 	if r.URL.Path == "/" && query == "" {
 		return caller, true
 	}
