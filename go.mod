@@ -8,7 +8,7 @@ require (
 	github.com/klauspost/compress v1.17.7
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20240314234648-9da8e7407257
-	github.com/tailscale/squibble v0.0.0-20240330224510-1cb64c2a0374
+	github.com/tailscale/squibble v0.0.0-20240404011841-d506ba44e8af
 	honnef.co/go/tools v0.4.7
 	modernc.org/sqlite v1.29.5
 	tailscale.com v1.63.0-pre.0.20240402203230-14683371ee6c

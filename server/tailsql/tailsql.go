@@ -445,7 +445,7 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 				// Record successful queries in the persistent log.  But don't log
 				// queries to the state database itself.
 				if err == nil && src != s.self {
-					serr := s.state.LogQuery(ctx, caller, src, query)
+					serr := s.state.LogQuery(ctx, caller, src, query, out.Elapsed)
 					if serr != nil {
 						s.logf("[tailsql] WARNING: Error logging query: %v", serr)
 					}

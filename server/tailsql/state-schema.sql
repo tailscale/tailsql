@@ -16,12 +16,13 @@ CREATE TABLE IF NOT EXISTS raw_query_log (
   query_id INTEGER NOT NULL
      REFERENCES queries (query_id),
   timestamp TIMESTAMP NOT NULL
-     DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now'))
+     DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now')),
+  elapsed INTEGER NULL     -- microseconds
 );
 
 -- A joined view of the query log.
 CREATE VIEW IF NOT EXISTS query_log AS
-  SELECT author, source, query, timestamp
+  SELECT author, source, query, timestamp, elapsed
     FROM raw_query_log JOIN queries
    USING (query_id)
 ;
