@@ -30,9 +30,8 @@ var schema = &squibble.Schema{
 			Apply: squibble.Exec(
 				`ALTER TABLE raw_query_log ADD COLUMN elapsed INTEGER NULL`,
 				`DROP VIEW query_log`,
-				`CREATE VIEW query_log AS
-              SELECT author, source, query, timestamp, elapsed
-                FROM raw_query_log JOIN queries USING (query_id)`,
+				`CREATE VIEW query_log AS SELECT author, source, query, timestamp, elapsed `+
+					`FROM raw_query_log JOIN queries USING (query_id)`,
 			),
 		},
 	},
