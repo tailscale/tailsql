@@ -251,13 +251,13 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
 		htmlRequestCount.Add(1)
-		err = s.serveUIInternal(w, r, caller, q.Source, q.Query)
+		err = s.serveUIInternal(w, r, caller, q)
 	case "/csv":
 		csvRequestCount.Add(1)
-		err = s.serveCSVInternal(w, r, caller, q.Source, q.Query)
+		err = s.serveCSVInternal(w, r, caller, q)
 	case "/json":
 		jsonRequestCount.Add(1)
-		err = s.serveJSONInternal(w, r, caller, q.Source, q.Query)
+		err = s.serveJSONInternal(w, r, caller, q)
 	case "/meta":
 		metaRequestCount.Add(1)
 		err = s.serveMetaInternal(w, r)
@@ -282,25 +282,25 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 }
 
 // serveUIInternal handles the root GET "/" route.
-func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
+func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller string, q Query) error {
 	http.SetCookie(w, siteAccessCookie)
 	w.Header().Set("Content-Security-Policy", contentSecurityPolicy)
 	w.Header().Set("X-Frame-Options", "DENY")
 
 	// If a non-empty query is present, require either a site access cookie or a
 	// no-browsers header.
-	if query != "" && !requestHasSecureHeader(r) && !requestHasSiteAccess(r) {
+	if q.Query != "" && !requestHasSecureHeader(r) && !requestHasSiteAccess(r) {
 		return statusErrorf(http.StatusFound, "access cookie not found (redirecting)")
 	}
 
 	w.Header().Set("Content-Type", "text/html")
 	data := &uiData{
-		Query:   query,
-		Source:  src,
+		Query:   q.Query,
+		Source:  q.Source,
 		Sources: s.getHandles(),
 		Links:   s.links,
 	}
-	out, err := s.queryContext(r.Context(), caller, src, query)
+	out, err := s.queryContext(r.Context(), caller, q)
 	if errors.Is(err, errTooManyRows) {
 		out.More = true
 	} else if err != nil {
@@ -323,8 +323,8 @@ func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller,
 }
 
 // serveCSVInternal handles the GET /csv route.
-func (s *Server) serveCSVInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
-	if query == "" {
+func (s *Server) serveCSVInternal(w http.ResponseWriter, r *http.Request, caller string, q Query) error {
+	if q.Query == "" {
 		return statusErrorf(http.StatusBadRequest, "no query provided")
 	}
 
@@ -333,7 +333,7 @@ func (s *Server) serveCSVInternal(w http.ResponseWriter, r *http.Request, caller
 		return statusErrorf(http.StatusForbidden, "query access denied")
 	}
 
-	out, err := s.queryContext(r.Context(), caller, src, query)
+	out, err := s.queryContext(r.Context(), caller, q)
 	if errors.Is(err, errTooManyRows) {
 		// fall through to serve what we got
 	} else if err != nil {
@@ -350,15 +350,15 @@ func (s *Server) serveCSVInternal(w http.ResponseWriter, r *http.Request, caller
 }
 
 // serveJSONInternal handles the GET /json route.
-func (s *Server) serveJSONInternal(w http.ResponseWriter, r *http.Request, caller, src, query string) error {
-	if query == "" {
+func (s *Server) serveJSONInternal(w http.ResponseWriter, r *http.Request, caller string, q Query) error {
+	if q.Query == "" {
 		return statusErrorf(http.StatusBadRequest, "no query provided")
 	}
 	if !requestHasSecureHeader(r) {
 		return statusErrorf(http.StatusForbidden, "query access denied")
 	}
 
-	out, err := s.queryContextJSON(r.Context(), caller, src, query)
+	out, err := s.queryContextJSON(r.Context(), caller, q)
 	if err != nil {
 		queryErrorCount.Add(1)
 		return err
@@ -403,24 +403,24 @@ var errTooManyRows = errors.New("too many rows")
 // If the number of rows exceeds a sensible limit, it reports errTooManyRows.
 // In that case, the result set is still valid, and contains the results that
 // were read up to that point.
-func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*dbResult, error) {
-	if query == "" {
+func (s *Server) queryContext(ctx context.Context, caller string, q Query) (*dbResult, error) {
+	if q.Query == "" {
 		return nil, nil
 	}
 
 	// As a special case, treat a query prefixed with "meta:" as a meta-query to
 	// be answered regardless of source.
-	if strings.HasPrefix(query, "meta:") {
-		return s.queryMeta(ctx, query)
+	if strings.HasPrefix(q.Query, "meta:") {
+		return s.queryMeta(ctx, q.Query)
 	}
 
-	h := s.dbHandleForSource(src)
+	h := s.dbHandleForSource(q.Source)
 	if h == nil {
-		return nil, statusErrorf(http.StatusBadRequest, "unknown source %q", src)
+		return nil, statusErrorf(http.StatusBadRequest, "unknown source %q", q.Source)
 	}
 	// Verify that the query does not contain statements we should not ask the
 	// database to execute.
-	if err := checkQuery(query); err != nil {
+	if err := checkQuerySyntax(q.Query); err != nil {
 		return nil, statusErrorf(http.StatusBadRequest, "invalid query: %w", err)
 	}
 
@@ -439,12 +439,12 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 			defer func() {
 				out.Elapsed = time.Since(start)
 				s.logf("[tailsql] query src=%q query=%q elapsed=%v err=%v",
-					src, query, out.Elapsed.Round(time.Millisecond), err)
+					q.Source, q.Query, out.Elapsed.Round(time.Millisecond), err)
 
 				// Record successful queries in the persistent log.  But don't log
 				// queries to the state database itself.
-				if err == nil && src != s.self {
-					serr := s.state.LogQuery(ctx, caller, src, query, out.Elapsed)
+				if err == nil && q.Source != s.self {
+					serr := s.state.LogQuery(ctx, caller, q, out.Elapsed)
 					if serr != nil {
 						s.logf("[tailsql] WARNING: Error logging query: %v", serr)
 					}
@@ -452,16 +452,16 @@ func (s *Server) queryContext(ctx context.Context, caller, src, query string) (*
 			}()
 
 			// Check for a named query.
-			if name, ok := strings.CutPrefix(query, "named:"); ok {
+			if name, ok := strings.CutPrefix(q.Query, "named:"); ok {
 				real, ok := lookupNamedQuery(fctx, name)
 				if !ok {
 					return nil, statusErrorf(http.StatusBadRequest, "named query %q not recognized", name)
 				}
 				s.logf("[tailsql] resolved named query %q to %#q", name, real)
-				query = real
+				q.Query = real
 			}
 
-			rows, err := tx.QueryContext(fctx, query)
+			rows, err := tx.QueryContext(fctx, q.Query)
 			if err != nil {
 				return nil, err
 			}
@@ -528,12 +528,12 @@ func (s *Server) queryMeta(ctx context.Context, metaQuery string) (*dbResult, er
 
 // queryContextJSON calls s.queryContextAny and, if it succeeds, converts its
 // results into values suitable for JSON encoding.
-func (s *Server) queryContextJSON(ctx context.Context, caller, src, query string) ([]jsonRow, error) {
-	if query == "" {
+func (s *Server) queryContextJSON(ctx context.Context, caller string, q Query) ([]jsonRow, error) {
+	if q.Query == "" {
 		return nil, nil
 	}
 
-	out, err := s.queryContext(ctx, caller, src, query)
+	out, err := s.queryContext(ctx, caller, q)
 	if errors.Is(err, errTooManyRows) {
 		// fall through to serve what we got
 	} else if err != nil {

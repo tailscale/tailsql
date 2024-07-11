@@ -212,13 +212,13 @@ func errorCode(err error) int {
 	return http.StatusInternalServerError
 }
 
-// checkQuery reports whether query is safe to send to the database.
+// checkQuerySyntax reports whether query is safe to send to the database.
 //
 // A read-only SQLite database will correctly report errors for operations that
 // modify the database or its schema if it is opened read-only. However, the
 // ATTACH and DETACH verbs modify only the connection, permitting the caller to
 // mention any database accessible from the filesystem.
-func checkQuery(query string) error {
+func checkQuerySyntax(query string) error {
 	for _, tok := range sqlTokens(query) {
 		switch tok {
 		case "ATTACH", "DETACH", "TEMP", "TEMPORARY":

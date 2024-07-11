@@ -56,12 +56,12 @@ func newLocalState(db *sql.DB) (*localState, error) {
 }
 
 // LogQuery adds the specified query to the query log.
-// The user is the login of the user originating the query, source is the
-// target database, and query is the SQL of the query itself.
+// The user is the login of the user originating the query, q is the source
+// database and query SQL text.
 // If elapsed > 0, it is recorded as the elapsed execution time.
 //
 // If s == nil, the query is discarded without error.
-func (s *localState) LogQuery(ctx context.Context, user, source, query string, elapsed time.Duration) error {
+func (s *localState) LogQuery(ctx context.Context, user string, q Query, elapsed time.Duration) error {
 	if s == nil {
 		return nil // OK, nothing to do
 	}
@@ -75,11 +75,9 @@ func (s *localState) LogQuery(ctx context.Context, user, source, query string, e
 
 	// Look up or insert the query into the queries table to get an ID.
 	var queryID int64
-	err = tx.QueryRow(`SELECT query_id FROM queries WHERE query = ?`,
-		query).Scan(&queryID)
+	err = tx.QueryRow(`SELECT query_id FROM queries WHERE query = ?`, q.Query).Scan(&queryID)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = tx.QueryRow(`INSERT INTO QUERIES (query) VALUES (?) RETURNING (query_id)`,
-			query).Scan(&queryID)
+		err = tx.QueryRow(`INSERT INTO QUERIES (query) VALUES (?) RETURNING (query_id)`, q.Query).Scan(&queryID)
 	}
 	if err != nil {
 		return fmt.Errorf("update query ID: %w", err)
@@ -88,7 +86,7 @@ func (s *localState) LogQuery(ctx context.Context, user, source, query string, e
 	// Add a log entry referencing the query ID.
 	ecol := sql.NullInt64{Int64: int64(elapsed / time.Microsecond), Valid: elapsed > 0}
 	_, err = tx.Exec(`INSERT INTO raw_query_log (author, source, query_id, elapsed) VALUES (?, ?, ?, ?)`,
-		user, source, queryID, ecol)
+		user, q.Source, queryID, ecol)
 	if err != nil {
 		return fmt.Errorf("update query log: %w", err)
 	}
