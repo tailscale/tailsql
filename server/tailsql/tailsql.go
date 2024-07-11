@@ -113,6 +113,7 @@ type Server struct {
 	links     []UILink
 	rules     []UIRewriteRule
 	authorize func(string, *apitype.WhoIsResponse) error
+	qcheck    func(Query) (Query, error)
 	qtimeout  time.Duration
 	logf      logger.Logf
 
@@ -165,6 +166,7 @@ func NewServer(opts Options) (*Server, error) {
 		links:     opts.UILinks,
 		rules:     opts.UIRewriteRules,
 		authorize: opts.authorize(),
+		qcheck:    opts.checkQuery(),
 		qtimeout:  opts.QueryTimeout.Duration(),
 		logf:      opts.logf(),
 		dbs:       dbs,
@@ -225,40 +227,37 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	src := r.FormValue("src")
-	if src == "" {
+	q, err := s.qcheck(Query{
+		Source: r.FormValue("src"),
+		Query:  strings.TrimSpace(r.FormValue("q")),
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if q.Source == "" {
 		dbs := s.getHandles()
 		if len(dbs) != 0 {
-			src = dbs[0].Source() // default to the first source
+			q.Source = dbs[0].Source() // default to the first source
 		}
 	}
 
-	// Reject query strings that are egregiously too long.
-	const maxQueryBytes = 4000
-
-	query := strings.TrimSpace(r.FormValue("q"))
-	if len(query) > maxQueryBytes {
-		http.Error(w, "query too long", http.StatusBadRequest)
-		return
-	}
-
-	caller, isAuthorized := s.checkAuth(w, r, src, query)
+	caller, isAuthorized := s.checkAuth(w, r, q.Source, q.Query)
 	if !isAuthorized {
 		authErrorCount.Add(1)
 		return
 	}
 
-	var err error
 	switch r.URL.Path {
 	case "/":
 		htmlRequestCount.Add(1)
-		err = s.serveUIInternal(w, r, caller, src, query)
+		err = s.serveUIInternal(w, r, caller, q.Source, q.Query)
 	case "/csv":
 		csvRequestCount.Add(1)
-		err = s.serveCSVInternal(w, r, caller, src, query)
+		err = s.serveCSVInternal(w, r, caller, q.Source, q.Query)
 	case "/json":
 		jsonRequestCount.Add(1)
-		err = s.serveJSONInternal(w, r, caller, src, query)
+		err = s.serveJSONInternal(w, r, caller, q.Source, q.Query)
 	case "/meta":
 		metaRequestCount.Add(1)
 		err = s.serveMetaInternal(w, r)
