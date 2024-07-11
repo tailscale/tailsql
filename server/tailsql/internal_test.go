@@ -13,7 +13,7 @@ import (
 	"tailscale.com/tailcfg"
 )
 
-func TestCheckQuery(t *testing.T) {
+func TestCheckQuerySyntax(t *testing.T) {
 	tests := []struct {
 		query string
 		ok    bool
@@ -37,7 +37,7 @@ func TestCheckQuery(t *testing.T) {
         as demon_spawn;`, false},
 	}
 	for _, tc := range tests {
-		err := checkQuery(tc.query)
+		err := checkQuerySyntax(tc.query)
 		if tc.ok && err != nil {
 			t.Errorf("Query %q: unexpected error: %v", tc.query, err)
 		} else if !tc.ok && err == nil {
