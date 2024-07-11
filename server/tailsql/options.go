@@ -85,7 +85,7 @@ type Options struct {
 
 	// If non-nil, call this function with each query presented to the API.  If
 	// the function reports an error, the query fails; otherwise the returned
-	// query state are used to service the query.  If nil, DefaultCheckQuery is
+	// query state is used to service the query.  If nil, DefaultCheckQuery is
 	// used.
 	CheckQuery func(Query) (Query, error) `json:"-"`
 
