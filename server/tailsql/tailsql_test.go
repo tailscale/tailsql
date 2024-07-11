@@ -191,6 +191,15 @@ func TestServer(t *testing.T) {
 		UILinks: []tailsql.UILink{
 			{Anchor: testAnchor, URL: testURL},
 		},
+		CheckQuery: func(q tailsql.Query) (tailsql.Query, error) {
+			// Rewrite a source named "alias" as a spelling for "main" and add a
+			// comment at the front.
+			if q.Source == "alias" {
+				q.Source = "main"
+				q.Query = "-- Hello, world\n" + q.Query
+			}
+			return tailsql.DefaultCheckQuery(q)
+		},
 		UIRewriteRules: testUIRules,
 		Authorize:      authorizer.ACLGrants(nil),
 		Logf:           t.Logf,
@@ -225,13 +234,17 @@ func TestServer(t *testing.T) {
 	})
 
 	t.Run("UIDecoration", func(t *testing.T) {
-		q := make(url.Values)
-		q.Set("q", "select * from misc")
+		q := url.Values{
+			"q":   {"select * from misc"},
+			"src": {"alias"},
+		}
 		url := htest.URL + "?" + q.Encode()
 		ui := string(mustGet(t, cli, url))
 
 		// As a rough smoke test, look for expected substrings.
 		for _, want := range []string{
+			// The query should include its injected comment from the check function.
+			`-- Hello, world`,
 			// Stripe IDs should get wrapped in links.
 			`<a href="https://dashboard.stripe.com/customers/cus_Fak3Cu6t0m3rId"`,
 			`<a href="https://dashboard.stripe.com/invoices/in_1f4k31nv0Ic3Num83r"`,

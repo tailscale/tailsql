@@ -83,8 +83,23 @@ type Options struct {
 	// by the rule replaces the original string.
 	UIRewriteRules []UIRewriteRule `json:"-"`
 
+	// If non-nil, call this function with each query presented to the API.  If
+	// the function reports an error, the query fails; otherwise the returned
+	// query state is used to service the query.  If nil, DefaultCheckQuery is
+	// used.
+	CheckQuery func(Query) (Query, error) `json:"-"`
+
 	// If non-nil, send logs to this logger. If nil, use log.Printf.
 	Logf logger.Logf `json:"-"`
+}
+
+// checkQuery returns the query check function specified by options, or a
+// default that accepts all queries as given.
+func (o Options) checkQuery() func(Query) (Query, error) {
+	if o.CheckQuery == nil {
+		return DefaultCheckQuery
+	}
+	return o.CheckQuery
 }
 
 // openSources opens database handles to each of the sources defined by o.
@@ -575,4 +590,23 @@ func (o *DBOptions) namedQueries() map[string]string {
 		return nil
 	}
 	return o.NamedQueries
+}
+
+// A Query carries the parameters of a query presented to the API.
+type Query struct {
+	Source string // the data source requested
+	Query  string // the text of the query
+}
+
+// DefaultCheckQuery is the default query check function used if another is not
+// specified in the Options. It accepts all queries for all sources, as long as
+// the query text does not exceed 4000 bytes.
+func DefaultCheckQuery(q Query) (Query, error) {
+	// Reject query strings that are egregiously too long.
+	const maxQueryBytes = 4000
+
+	if len(q.Query) > maxQueryBytes {
+		return q, errors.New("query too long")
+	}
+	return q, nil
 }
