@@ -149,7 +149,7 @@ func NewServer(opts Options) (*Server, error) {
 		dbs = append(dbs, &dbHandle{
 			src:   opts.LocalSource,
 			label: "tailsql local state",
-			db:    db,
+			db:    sqlDB{DB: db},
 			named: map[string]string{
 				"schema": `select * from sqlite_schema`,
 			},
@@ -190,12 +190,12 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 
 	for _, src := range s.dbs {
 		if src.Source() == source {
-			src.swap(db, opts)
+			src.swap(sqlDB{DB: db}, opts)
 			return true
 		}
 	}
 	s.dbs = append(s.dbs, &dbHandle{
-		db:    db,
+		db:    sqlDB{DB: db},
 		src:   source,
 		label: opts.label(),
 		named: opts.namedQueries(),
@@ -432,8 +432,8 @@ func (s *Server) queryContext(ctx context.Context, caller string, q Query) (*dbR
 		defer cancel()
 	}
 
-	return runQueryInTx(ctx, h,
-		func(fctx context.Context, tx *sql.Tx) (_ *dbResult, err error) {
+	return runQuery(ctx, h,
+		func(fctx context.Context, db Queryable) (_ *dbResult, err error) {
 			start := time.Now()
 			var out dbResult
 			defer func() {
@@ -461,7 +461,7 @@ func (s *Server) queryContext(ctx context.Context, caller string, q Query) (*dbR
 				q.Query = real
 			}
 
-			rows, err := tx.QueryContext(fctx, q.Query)
+			rows, err := db.Query(fctx, q.Query)
 			if err != nil {
 				return nil, err
 			}

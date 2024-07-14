@@ -147,7 +147,7 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 			driver: spec.Driver,
 			label:  spec.Label,
 			named:  spec.Named,
-			db:     db,
+			db:     sqlDB{DB: db},
 		}
 		if spec.Secret != "" {
 			go srcs[i].handleUpdates(spec.Secret, w, o.logf())
@@ -309,7 +309,7 @@ type dbHandle struct {
 	// Hold exclusive to replace or close db or to update label.
 	mu    sync.RWMutex
 	label string
-	db    *sql.DB
+	db    Queryable
 	named map[string]string
 }
 
@@ -335,7 +335,7 @@ func (h *dbHandle) handleUpdates(name string, w setec.Watcher, logf logger.Logf)
 		if up := h.checkUpdate(); up != nil {
 			up.newDB.Close()
 		}
-		h.db = db
+		h.db = sqlDB{DB: db}
 		h.mu.Unlock()
 	}
 }
@@ -385,13 +385,12 @@ func (h *dbHandle) Named() map[string]string {
 	return h.named
 }
 
-// Tx calls f with a connection to the wrapped database while holding the lock.
-// Any error reported by f is returned to the caller of Tx.
-// Multiple callers can safely invoke Tx concurrently.
-// Tx reports an error without calling f if h is closed.
+// WithLock calls f with the wrapped database while holding the lock.
+// If f reports an error is returned to the caller of WithLock.
+// WithLock reports an error without calling f if h is closed.
 // The context passed to f can be used to look up named queries on h using
 // lookupNamedQuery.
-func (h *dbHandle) Tx(ctx context.Context, f func(context.Context, *sql.Tx) error) error {
+func (h *dbHandle) WithLock(ctx context.Context, f func(context.Context, Queryable) error) error {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	if h.db == nil {
@@ -402,20 +401,11 @@ func (h *dbHandle) Tx(ctx context.Context, f func(context.Context, *sql.Tx) erro
 	// safe, but to prevent the handle from being swapped (and the database
 	// closed) while connections are in-flight.
 	//
-	// For our uses we could mark transactions ReadOnly, but not all database
-	// drivers support that option (notably Snowflake does not).
-
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	// Attach the handle to the context during the lifetime of f.  This ensures
 	// that f has access to named queries and other options from h while holding
 	// the lock on h.
 	fctx := context.WithValue(ctx, dbHandleKey{}, h)
-	return f(fctx, tx) // we only read, no commit is needed
+	return f(fctx, h.db)
 }
 
 type dbHandleKey struct{}
@@ -437,7 +427,7 @@ func lookupNamedQuery(ctx context.Context, name string) (string, bool) {
 // and newLabel, and closes the original value. The caller is responsible for
 // closing a database handle when it is no longer in use.  It will panic if
 // newDB == nil, or if h is closed.
-func (h *dbHandle) swap(newDB *sql.DB, newOpts *DBOptions) {
+func (h *dbHandle) swap(newDB Queryable, newOpts *DBOptions) {
 	if newDB == nil {
 		panic("new database is nil")
 	}
@@ -471,7 +461,7 @@ func (h *dbHandle) swap(newDB *sql.DB, newOpts *DBOptions) {
 // A dbUpdate is an open database handle, label, and set of named queries that
 // are ready to be installed in a database handle.
 type dbUpdate struct {
-	newDB *sql.DB
+	newDB Queryable
 	label string
 	named map[string]string
 }
@@ -668,10 +658,5 @@ type RowSet interface {
 type sqlDB struct{ *sql.DB }
 
 func (s sqlDB) Query(ctx context.Context, query string) (RowSet, error) {
-	tx, err := s.DB.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	return tx.QueryContext(ctx, query)
+	return s.DB.QueryContext(ctx, query)
 }
