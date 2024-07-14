@@ -634,7 +634,7 @@ func DefaultCheckQuery(q Query) (Query, error) {
 type Queryable interface {
 	// Query issues the specified SQL query in a transaction and returns the
 	// matching result set, if any.
-	Query(ctx context.Context, sql string) (RowSet, error)
+	Query(ctx context.Context, sql string, params ...any) (RowSet, error)
 
 	// Close closes the database.
 	Close() error
@@ -665,6 +665,6 @@ type RowSet interface {
 
 type sqlDB struct{ *sql.DB }
 
-func (s sqlDB) Query(ctx context.Context, query string) (RowSet, error) {
-	return s.DB.QueryContext(ctx, query)
+func (s sqlDB) Query(ctx context.Context, query string, params ...any) (RowSet, error) {
+	return s.DB.QueryContext(ctx, query, params...)
 }

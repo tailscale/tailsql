@@ -95,7 +95,7 @@ func (s *localState) LogQuery(ctx context.Context, user string, q Query, elapsed
 }
 
 // Query satisfies part of the Queryable interface. It supports only read queries.
-func (s *localState) Query(ctx context.Context, query string) (RowSet, error) {
+func (s *localState) Query(ctx context.Context, query string, params ...any) (RowSet, error) {
 	s.txmu.RLock()
 	defer s.txmu.RUnlock()
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
@@ -103,7 +103,7 @@ func (s *localState) Query(ctx context.Context, query string) (RowSet, error) {
 		return nil, err
 	}
 	defer tx.Rollback()
-	return tx.QueryContext(ctx, query)
+	return tx.QueryContext(ctx, query, params...)
 }
 
 // Close satisfies part of the Queryable interface.  For this database the

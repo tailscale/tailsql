@@ -521,6 +521,6 @@ func TestQueryable(t *testing.T) {
 
 type sqlDB struct{ *sql.DB }
 
-func (s sqlDB) Query(ctx context.Context, query string) (tailsql.RowSet, error) {
-	return s.DB.QueryContext(ctx, query)
+func (s sqlDB) Query(ctx context.Context, query string, params ...any) (tailsql.RowSet, error) {
+	return s.DB.QueryContext(ctx, query, params...)
 }
