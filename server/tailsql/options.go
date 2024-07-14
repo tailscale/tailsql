@@ -567,7 +567,7 @@ func (d *DBSpec) checkValid() error {
 	// Case 1: A programmatic data source.
 	if d.DB != nil {
 		if d.countFields() != 0 {
-			return errors.New("exactly one connection source must be set")
+			return errors.New("no connection string is allowed when DB is set")
 		}
 		return nil
 	}
