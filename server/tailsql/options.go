@@ -119,6 +119,19 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 			spec.Label = "(unidentified database)"
 		}
 
+		// Case 1: A programmatic source.
+		if spec.DB != nil {
+			srcs[i] = &dbHandle{
+				src:   spec.Source,
+				label: spec.Label,
+				named: spec.Named,
+				db:    spec.DB,
+			}
+			continue
+		}
+
+		// Case 2: A database managed by database/sql.
+		//
 		// Resolve the connection string.
 		var connString string
 		var w setec.Watcher
@@ -138,6 +151,7 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 			panic("unexpected: no connection source is defined after validation")
 		}
 
+		// Open and ping the database to ensure it is approximately usable.
 		db, err := openAndPing(spec.Driver, connString)
 		if err != nil {
 			return nil, err
