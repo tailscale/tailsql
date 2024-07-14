@@ -25,15 +25,18 @@ import (
 )
 
 // Options describes settings for a Server.
+//
+// The fields marked as "tsnet" are not used directly by tailsql, but are
+// provided for the convenience of a main program that wants to run the server
+// under tsnet.
 type Options struct {
-	// The tailnet hostname the server should run on (required).
+	// The tailnet hostname the server should run on (tsnet).
 	Hostname string `json:"hostname,omitempty"`
 
-	// The directory for tailscale state and configurations (optional).
-	// If omitted or empty, the default location is used.
+	// The directory for tailscale state and configurations (tsnet).
 	StateDir string `json:"stateDir,omitempty"`
 
-	// If true, serve HTTPS instead of HTTP.
+	// If true, serve HTTPS instead of HTTP (tsnet).
 	ServeHTTPS bool `json:"serveHTTPS,omitempty"`
 
 	// If non-empty, a SQLite database URL to use for local state.
