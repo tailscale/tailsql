@@ -610,3 +610,36 @@ func DefaultCheckQuery(q Query) (Query, error) {
 	}
 	return q, nil
 }
+
+// Queryable is the interface used to issue SQL queries to a database.
+type Queryable interface {
+	// Query issues the specified SQL query in a transaction and returns the
+	// matching result set, if any.
+	Query(ctx context.Context, sql string) (RowSet, error)
+
+	// Close closes the database.
+	Close() error
+}
+
+// A RowSet is a sequence of rows reported by a query. It is a subset of the
+// interface exposed by [database/sql.Rows], and the implementation must
+// provide the same semantics for each of these methods.
+type RowSet interface {
+	// Columns reports the names of the columns requested by the query.
+	Columns() ([]string, error)
+
+	// Close closes the row set, preventing further enumeration.
+	Close() error
+
+	// Err returns the error, if any, that was encountered during iteration.
+	Err() error
+
+	// Next prepares the next result row for reading by the Scan method, and
+	// reports true if this was successful or false if there was an error or no
+	// more rows are available.
+	Next() bool
+
+	// Scan copies the columns of the currently-selected row into the values
+	// pointed to by its arguments.
+	Scan(...any) error
+}
