@@ -520,27 +520,31 @@ func (d *Duration) UnmarshalText(data []byte) error {
 }
 
 // A DBSpec describes a database that the server should use.
+//
+// The Source must be non-empty, and exactly one of URL, KeyFile, Secret, or DB
+// must be set.
+//
+//   - If DB is set, it is used directly as the database to query, and no
+//     connection is established.
+//
+// Otherwise, the Driver must be non-empty and the [database/sql] library is
+// used to open a connection to the specified database:
+//
+//   - If URL is set, it is used directly as the connection string.
+//
+//   - If KeyFile is set, it names the location of a file containing the
+//     connection string.  If set, KeyFile is expanded by os.ExpandEnv.
+//
+//   - Otherwise, Secret is the name of a secret to fetch from the secrets
+//     service, whose value is the connection string. This requires that a
+//     secrets server be configured in the options.
 type DBSpec struct {
-	Source string `json:"source"`           // UI slug
+	Source string `json:"source"`           // UI slug (required)
 	Label  string `json:"label,omitempty"`  // descriptive label
 	Driver string `json:"driver,omitempty"` // e.g., "sqlite", "snowflake"
 
 	// Named is an optional map of named SQL queries the database should expose.
 	Named map[string]string `json:"named,omitempty"`
-
-	// Exactly one of the following fields must be set.
-	//
-	// If URL is set, it is used directly as the connection string.
-	//
-	// If KeyFile is set, it names the location of a file containing the
-	// connection string.  If set, KeyFile is expanded by os.ExpandEnv.
-	//
-	// If DB is set, it is used directly as the database to query, and no
-	// connection is established.
-	//
-	// Otherwise, Secret is the name of a secret to fetch from the secrets
-	// service, whose value is the connection string. This requires that a
-	// secrets server be configured in the options.
 
 	URL     string    `json:"url,omitempty"`     // path or connection URL
 	KeyFile string    `json:"keyFile,omitempty"` // path to key file
