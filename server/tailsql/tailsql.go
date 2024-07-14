@@ -467,13 +467,11 @@ func (s *Server) queryContext(ctx context.Context, caller string, q Query) (*dbR
 			}
 			defer rows.Close()
 
-			cols, err := rows.ColumnTypes()
+			cols, err := rows.Columns()
 			if err != nil {
-				return nil, fmt.Errorf("listing column types: %w", err)
+				return nil, fmt.Errorf("listing column names: %w", err)
 			}
-			for _, col := range cols {
-				out.Columns = append(out.Columns, col.Name())
-			}
+			out.Columns = cols
 
 			var tooMany bool
 			for rows.Next() && !tooMany {
