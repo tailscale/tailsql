@@ -93,3 +93,19 @@ func (s *localState) LogQuery(ctx context.Context, user string, q Query, elapsed
 
 	return tx.Commit()
 }
+
+// Query satisfies part of the Queryable interface. It supports only read queries.
+func (s *localState) Query(ctx context.Context, query string) (RowSet, error) {
+	s.txmu.RLock()
+	defer s.txmu.RUnlock()
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	return tx.QueryContext(ctx, query)
+}
+
+// Close satisfies part of the Queryable interface.  For this database the
+// implementation is a no-op without error.
+func (*localState) Close() error { return nil }

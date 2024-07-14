@@ -211,14 +211,6 @@ func (o Options) localState() (*localState, error) {
 	return newLocalState(db)
 }
 
-func (o Options) readOnlyLocalState() (*sql.DB, error) {
-	if o.LocalState == "" {
-		return nil, errors.New("no local state")
-	}
-	url := "file:" + os.ExpandEnv(o.LocalState) + "?mode=ro"
-	return sql.Open("sqlite", url)
-}
-
 func (o Options) logf() logger.Logf {
 	if o.Logf == nil {
 		return log.Printf

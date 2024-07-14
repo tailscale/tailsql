@@ -142,14 +142,10 @@ func NewServer(opts Options) (*Server, error) {
 		return nil, fmt.Errorf("local state: %w", err)
 	}
 	if state != nil && opts.LocalSource != "" {
-		db, err := opts.readOnlyLocalState()
-		if err != nil {
-			return nil, fmt.Errorf("read-only local state: %w", err)
-		}
 		dbs = append(dbs, &dbHandle{
 			src:   opts.LocalSource,
 			label: "tailsql local state",
-			db:    sqlDB{DB: db},
+			db:    state,
 			named: map[string]string{
 				"schema": `select * from sqlite_schema`,
 			},
