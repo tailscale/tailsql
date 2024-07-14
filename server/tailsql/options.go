@@ -664,3 +664,14 @@ type RowSet interface {
 	// pointed to by its arguments.
 	Scan(...any) error
 }
+
+type sqlDB struct{ *sql.DB }
+
+func (s sqlDB) Query(ctx context.Context, query string) (RowSet, error) {
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	return tx.QueryContext(ctx, query)
+}

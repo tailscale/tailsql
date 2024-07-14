@@ -5,7 +5,6 @@ package tailsql
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -148,12 +147,12 @@ func isBinaryData(data []byte) bool {
 	return false
 }
 
-// runQueryInTx executes query using h.Tx, and returns its results.
-func runQueryInTx[T any](ctx context.Context, h *dbHandle, query func(context.Context, *sql.Tx) (T, error)) (T, error) {
+// runQuery executes query using h.WithLock, and returns its results.
+func runQuery[T any](ctx context.Context, h *dbHandle, run func(context.Context, Queryable) (T, error)) (T, error) {
 	var out T
-	err := h.Tx(ctx, func(fctx context.Context, tx *sql.Tx) error {
+	err := h.WithLock(ctx, func(fctx context.Context, q Queryable) error {
 		var err error
-		out, err = query(fctx, tx)
+		out, err = run(fctx, q)
 		return err
 	})
 
