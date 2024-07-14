@@ -483,3 +483,44 @@ func TestQueryTimeout(t *testing.T) {
 		t.Fatal("Timeout waiting for query to end")
 	}
 }
+
+func TestQueryable(t *testing.T) {
+	_, db := mustInitSQLite(t)
+
+	s, err := tailsql.NewServer(tailsql.Options{
+		Sources: []tailsql.DBSpec{{
+			Source: "quux",
+			Label:  "Happy fun database",
+			DB:     sqlDB{DB: db},
+
+			// Note: Omit Driver to exercise that this is allowed when a
+			// programmatic data source is given.
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	defer s.Close()
+
+	htest := httptest.NewServer(s.NewMux())
+	defer htest.Close()
+	cli := htest.Client()
+
+	t.Run("Smoke", func(t *testing.T) {
+		const testProbe = "mindlesprocket"
+		q := url.Values{
+			"src": {"quux"},
+			"q":   {fmt.Sprintf(`select '%s'`, testProbe)},
+		}
+		rsp := string(mustGet(t, cli, htest.URL+"/csv?"+q.Encode()))
+		if !strings.Contains(rsp, testProbe) {
+			t.Errorf("Query failed: got %q, want %q", rsp, testProbe)
+		}
+	})
+}
+
+type sqlDB struct{ *sql.DB }
+
+func (s sqlDB) Query(ctx context.Context, query string) (tailsql.RowSet, error) {
+	return s.DB.QueryContext(ctx, query)
+}
