@@ -174,14 +174,20 @@ func NewServer(opts Options) (*Server, error) {
 }
 
 // SetDB adds or replaces the database associated with the specified source in
-// s with the given open db and options.
+// s with the given open db and options. See [SetSource].
+func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
+	return s.SetSource(source, sqlDB{DB: db}, opts)
+}
+
+// SetSource adds or replaces the database associated with the specified source
+// in s with the given open db and options.
 //
 // If a database was already open for the given source, its value is replaced,
 // the old database handle is closed, and SetDB reports true.
 //
 // If no database was already open for the given source, a new source is added
 // and SetDB reports false.
-func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
+func (s *Server) SetSource(source string, db Queryable, opts *DBOptions) bool {
 	if db == nil {
 		panic("new database is nil")
 	}
@@ -190,12 +196,12 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 
 	for _, src := range s.dbs {
 		if src.Source() == source {
-			src.swap(sqlDB{DB: db}, opts)
+			src.swap(db, opts)
 			return true
 		}
 	}
 	s.dbs = append(s.dbs, &dbHandle{
-		db:    sqlDB{DB: db},
+		db:    db,
 		src:   source,
 		label: opts.label(),
 		named: opts.namedQueries(),
