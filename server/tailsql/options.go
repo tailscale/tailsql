@@ -532,13 +532,17 @@ type DBSpec struct {
 	// If KeyFile is set, it names the location of a file containing the
 	// connection string.  If set, KeyFile is expanded by os.ExpandEnv.
 	//
+	// If DB is set, it is used directly as the database to query, and no
+	// connection is established.
+	//
 	// Otherwise, Secret is the name of a secret to fetch from the secrets
 	// service, whose value is the connection string. This requires that a
 	// secrets server be configured in the options.
 
-	URL     string `json:"url,omitempty"`     // path or connection URL
-	KeyFile string `json:"keyFile,omitempty"` // path to key file
-	Secret  string `json:"secret,omitempty"`  // name of secret
+	URL     string    `json:"url,omitempty"`     // path or connection URL
+	KeyFile string    `json:"keyFile,omitempty"` // path to key file
+	Secret  string    `json:"secret,omitempty"`  // name of secret
+	DB      Queryable `json:"-"`                 // programmatic data source
 }
 
 func (d *DBSpec) countFields() (n int) {
@@ -551,12 +555,22 @@ func (d *DBSpec) countFields() (n int) {
 }
 
 func (d *DBSpec) checkValid() error {
-	switch {
-	case d.Source == "":
-		return errors.New("missing source")
-	case d.Driver == "":
+	if d.Source == "" {
+		return errors.New("missing source name")
+	}
+
+	// Case 1: A programmatic data source.
+	if d.DB != nil {
+		if d.countFields() != 0 {
+			return errors.New("exactly one connection source must be set")
+		}
+		return nil
+	}
+
+	// Case 2: A database/sql database.
+	if d.Driver == "" {
 		return errors.New("missing driver name")
-	case d.countFields() != 1:
+	} else if d.countFields() != 1 {
 		return errors.New("exactly one connection source must be set")
 	}
 	return nil
