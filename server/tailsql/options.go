@@ -542,6 +542,8 @@ type DBSpec struct {
 	// Named is an optional map of named SQL queries the database should expose.
 	Named map[string]string `json:"named,omitempty"`
 
+	// Exactly one of the fields below must be set.
+
 	URL     string    `json:"url,omitempty"`     // path or connection URL
 	KeyFile string    `json:"keyFile,omitempty"` // path to key file
 	Secret  string    `json:"secret,omitempty"`  // name of secret
