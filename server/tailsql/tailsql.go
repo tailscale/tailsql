@@ -142,14 +142,10 @@ func NewServer(opts Options) (*Server, error) {
 		return nil, fmt.Errorf("local state: %w", err)
 	}
 	if state != nil && opts.LocalSource != "" {
-		db, err := opts.readOnlyLocalState()
-		if err != nil {
-			return nil, fmt.Errorf("read-only local state: %w", err)
-		}
 		dbs = append(dbs, &dbHandle{
 			src:   opts.LocalSource,
 			label: "tailsql local state",
-			db:    db,
+			db:    state,
 			named: map[string]string{
 				"schema": `select * from sqlite_schema`,
 			},
@@ -174,14 +170,20 @@ func NewServer(opts Options) (*Server, error) {
 }
 
 // SetDB adds or replaces the database associated with the specified source in
-// s with the given open db and options.
+// s with the given open db and options. See [SetSource].
+func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
+	return s.SetSource(source, sqlDB{DB: db}, opts)
+}
+
+// SetSource adds or replaces the database associated with the specified source
+// in s with the given open db and options.
 //
 // If a database was already open for the given source, its value is replaced,
 // the old database handle is closed, and SetDB reports true.
 //
 // If no database was already open for the given source, a new source is added
 // and SetDB reports false.
-func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
+func (s *Server) SetSource(source string, db Queryable, opts *DBOptions) bool {
 	if db == nil {
 		panic("new database is nil")
 	}
@@ -432,8 +434,8 @@ func (s *Server) queryContext(ctx context.Context, caller string, q Query) (*dbR
 		defer cancel()
 	}
 
-	return runQueryInTx(ctx, h,
-		func(fctx context.Context, tx *sql.Tx) (_ *dbResult, err error) {
+	return runQuery(ctx, h,
+		func(fctx context.Context, db Queryable) (_ *dbResult, err error) {
 			start := time.Now()
 			var out dbResult
 			defer func() {
@@ -461,19 +463,17 @@ func (s *Server) queryContext(ctx context.Context, caller string, q Query) (*dbR
 				q.Query = real
 			}
 
-			rows, err := tx.QueryContext(fctx, q.Query)
+			rows, err := db.Query(fctx, q.Query)
 			if err != nil {
 				return nil, err
 			}
 			defer rows.Close()
 
-			cols, err := rows.ColumnTypes()
+			cols, err := rows.Columns()
 			if err != nil {
-				return nil, fmt.Errorf("listing column types: %w", err)
+				return nil, fmt.Errorf("listing column names: %w", err)
 			}
-			for _, col := range cols {
-				out.Columns = append(out.Columns, col.Name())
-			}
+			out.Columns = cols
 
 			var tooMany bool
 			for rows.Next() && !tooMany {

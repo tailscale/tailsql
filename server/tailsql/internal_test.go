@@ -4,6 +4,7 @@
 package tailsql
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 
@@ -11,6 +12,12 @@ import (
 	"github.com/tailscale/tailsql/authorizer"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
+)
+
+// Interface satisfaction checks.
+var (
+	_ Queryable = sqlDB{}
+	_ RowSet    = (*sql.Rows)(nil)
 )
 
 func TestCheckQuerySyntax(t *testing.T) {

@@ -130,7 +130,7 @@ opts := tailsql.Options{
 }
 ```
 
-Any number of sources can be configured this way. It is also possible to add new data sources dynamically at runtime using the `SetDB` method of the server. It is _not_ currently possible to remove data sources once added, however.
+Any number of sources can be configured this way. It is also possible to add new data sources dynamically at runtime using the `SetDB` and `SetSource` methods of the server. It is _not_ currently possible to remove data sources once added, however.
 
 ### Tailscale Integration
 
