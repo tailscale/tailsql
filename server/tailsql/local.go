@@ -98,12 +98,7 @@ func (s *localState) LogQuery(ctx context.Context, user string, q Query, elapsed
 func (s *localState) Query(ctx context.Context, query string, params ...any) (RowSet, error) {
 	s.txmu.RLock()
 	defer s.txmu.RUnlock()
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	return tx.QueryContext(ctx, query, params...)
+	return s.db.QueryContext(ctx, query, params...)
 }
 
 // Close satisfies part of the Queryable interface.  For this database the
