@@ -52,6 +52,10 @@ type Options struct {
 	// Additional links that should be propagated to the UI.
 	UILinks []UILink `json:"links,omitempty"`
 
+	// If set, prepend this prefix to each HTTP route. By default, routes are
+	// anchored at "/".
+	RoutePrefix string `json:"routePrefix,omitempty"`
+
 	// The maximum timeout for a database query (0 means no timeout).
 	QueryTimeout Duration `json:"queryTimeout,omitempty"`
 
@@ -209,6 +213,15 @@ func (o Options) localState() (*localState, error) {
 		return nil, fmt.Errorf("ping %q: %w", url, err)
 	}
 	return newLocalState(db)
+}
+
+func (o Options) routePrefix() string {
+	if o.RoutePrefix != "" {
+		// Routes are anchored at "/" by default, so remove a trailing "/" if
+		// there is one. E.g., "/foo/" beomes "/foo", and "/" becomes "".
+		return strings.TrimSuffix(o.RoutePrefix, "/")
+	}
+	return ""
 }
 
 func (o Options) logf() logger.Logf {

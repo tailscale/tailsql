@@ -30,12 +30,13 @@ type LocalClient interface {
 
 // uiData is the concrete type of the data value passed to the UI template.
 type uiData struct {
-	Query   string      // the original query
-	Sources []*dbHandle // the available databases
-	Source  string      // the selected source
-	Output  *dbResult   // query results (may be nil)
-	Error   *string     // error results (may be nil)
-	Links   []UILink    // static UI links
+	Query       string      // the original query
+	Sources     []*dbHandle // the available databases
+	Source      string      // the selected source
+	Output      *dbResult   // query results (may be nil)
+	Error       *string     // error results (may be nil)
+	Links       []UILink    // static UI links
+	RoutePrefix string      // for links to the API and static files
 }
 
 // Version reports the version string of the currently running binary.

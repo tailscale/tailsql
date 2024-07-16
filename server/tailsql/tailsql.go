@@ -111,6 +111,7 @@ type Server struct {
 	state     *localState // local state database (for query logs)
 	self      string      // if non-empty, the local state source label
 	links     []UILink
+	prefix    string
 	rules     []UIRewriteRule
 	authorize func(string, *apitype.WhoIsResponse) error
 	qcheck    func(Query) (Query, error)
@@ -160,6 +161,7 @@ func NewServer(opts Options) (*Server, error) {
 		state:     state,
 		self:      opts.LocalSource,
 		links:     opts.UILinks,
+		prefix:    opts.routePrefix(),
 		rules:     opts.UIRewriteRules,
 		authorize: opts.authorize(),
 		qcheck:    opts.checkQuery(),
@@ -219,8 +221,11 @@ func (s *Server) Close() error {
 // NewMux constructs an HTTP router for the service.
 func (s *Server) NewMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.serveUI)
-	mux.Handle("/static/", http.FileServer(http.FS(staticFS)))
+	mux.Handle(s.prefix+"/", http.StripPrefix(s.prefix, http.HandlerFunc(s.serveUI)))
+
+	// N.B. We have to strip the prefix back off for the static files, since the
+	// embedded FS thinks it is rooted at "/".
+	mux.Handle(s.prefix+"/static/", http.StripPrefix(s.prefix, http.FileServer(http.FS(staticFS))))
 	return mux
 }
 
@@ -297,10 +302,11 @@ func (s *Server) serveUIInternal(w http.ResponseWriter, r *http.Request, caller 
 
 	w.Header().Set("Content-Type", "text/html")
 	data := &uiData{
-		Query:   q.Query,
-		Source:  q.Source,
-		Sources: s.getHandles(),
-		Links:   s.links,
+		Query:       q.Query,
+		Source:      q.Source,
+		Sources:     s.getHandles(),
+		Links:       s.links,
+		RoutePrefix: s.prefix,
 	}
 	out, err := s.queryContext(r.Context(), caller, q)
 	if errors.Is(err, errTooManyRows) {
