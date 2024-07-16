@@ -6,7 +6,7 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
     const dlButton = document.getElementById("dl-button");
     const qform    = document.getElementById('qform');
     const output   = document.getElementById('output');
-    const origin   = document.location.origin;
+    const base     = document.location.origin + document.location.pathname;
     const sources  = document.getElementById('sources');
     const body     = document.getElementById('tsql');
 
@@ -100,8 +100,8 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
     dlButton.addEventListener("click", (evt) => {
         var fd = new FormData(qform);
         var sp = new URLSearchParams(fd);
+        var href = base + "csv?" + sp.toString();
 
-        var href = origin + "/csv?" + sp.toString();
         performDownload('query.csv', href);
     });
 

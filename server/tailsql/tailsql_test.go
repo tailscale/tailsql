@@ -524,3 +524,46 @@ type sqlDB struct{ *sql.DB }
 func (s sqlDB) Query(ctx context.Context, query string, params ...any) (tailsql.RowSet, error) {
 	return s.DB.QueryContext(ctx, query, params...)
 }
+
+func TestRoutePrefix(t *testing.T) {
+	s, err := tailsql.NewServer(tailsql.Options{
+		RoutePrefix: "/sub/dir",
+	})
+	if err != nil {
+		t.Fatalf("NewServer: unexpected error: %v", err)
+	}
+	defer s.Close()
+
+	hs := httptest.NewServer(s.NewMux())
+	defer hs.Close()
+	cli := hs.Client()
+
+	t.Run("NotFound", func(t *testing.T) {
+		rsp, err := cli.Get(hs.URL + "/static/logo.svg")
+		if err != nil {
+			t.Fatalf("Get: unexpected error: %v", err)
+		}
+		_, err = io.ReadAll(rsp.Body)
+		rsp.Body.Close()
+		if err != nil {
+			t.Errorf("Read body: %v", err)
+		}
+		if code := rsp.StatusCode; code != http.StatusNotFound {
+			t.Errorf("Get: got response %v, want %v", code, http.StatusNotFound)
+		}
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		txt := string(mustGet(t, cli, hs.URL+"/sub/dir/static/logo.svg"))
+		if !strings.HasPrefix(txt, "<svg ") {
+			t.Errorf("Get logo.svg: output missing SVG prefix:\n%s", txt)
+		}
+	})
+
+	t.Run("UI", func(t *testing.T) {
+		txt := string(mustGet(t, cli, hs.URL+"/sub/dir"))
+		if !strings.Contains(txt, "Tailscale SQL Playground") {
+			t.Errorf("Get UI: missing expected title:\n%s", txt)
+		}
+	})
+}

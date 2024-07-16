@@ -2,12 +2,12 @@
 <html><head>
  <title>Tailscale SQL Playground</title>
  <meta charset="utf-8" />
- <link rel="stylesheet" type="text/css" href="/static/style.css" />
- <link rel="icon" href="/static/favicon.ico" />
+ <link rel="stylesheet" type="text/css" href="{{.RoutePrefix}}/static/style.css" />
+ <link rel="icon" href="{{.RoutePrefix}}/static/favicon.ico" />
 </head><body id="tsql">
 
 <div class="logo">
-  <img src="/static/logo.svg" width=64 height=64 />
+  <img src="{{.RoutePrefix}}/static/logo.svg" width=64 height=64 />
   <span>TailSQL</span>
 </div>
 
@@ -56,6 +56,6 @@
 </table></div>
 {{end -}}
 
-<script type="module" src="/static/script.js"></script>
+<script type="module" src="{{.RoutePrefix}}/static/script.js"></script>
 </body>
 </html>

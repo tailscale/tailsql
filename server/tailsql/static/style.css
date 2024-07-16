@@ -186,7 +186,7 @@ div.action {
 .action .ctrl:before {
   display: none;
 }
-.action .ctrl:-webkit-details-marker {
+.action .ctrl::-webkit-details-marker {
   display: none;
 }
 
@@ -195,6 +195,6 @@ div.action {
   position: relative;
   height: 32px;
   width: 32px;
-  background: url('/static/nut.png') 0px 0px;
+  background: url('nut.png') 0px 0px;
   visibility: hidden;
 }

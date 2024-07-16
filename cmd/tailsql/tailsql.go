@@ -124,7 +124,7 @@ func runLocalService(ctx context.Context, opts tailsql.Options, port int) error 
 		hsrv.Shutdown(context.Background()) // ctx is already terminated
 		tsql.Close()
 	}()
-	log.Printf("Starting local tailsql at http://%s", hsrv.Addr)
+	log.Printf("Starting local tailsql at http://%s", hsrv.Addr+opts.RoutePrefix)
 	if err := hsrv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		ctrl.Fatalf(err.Error())
 	}
