@@ -11,7 +11,7 @@ require (
 	github.com/tailscale/squibble v0.0.0-20240418235321-9ee0eeb78185
 	honnef.co/go/tools v0.4.7
 	modernc.org/sqlite v1.29.7
-	tailscale.com v1.69.0-pre.0.20240710201405-8d7b78f3f795
+	tailscale.com v1.71.0-pre.0.20240725132017-855da477773c
 )
 
 require (
