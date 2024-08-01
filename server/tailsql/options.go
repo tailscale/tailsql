@@ -205,14 +205,7 @@ func (o Options) localState() (*localState, error) {
 		return nil, nil
 	}
 	url := os.ExpandEnv(o.LocalState)
-	db, err := sql.Open("sqlite", url)
-	if err != nil {
-		return nil, fmt.Errorf("open %q: %w", url, err)
-	} else if err := db.PingContext(context.Background()); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("ping %q: %w", url, err)
-	}
-	return newLocalState(db)
+	return newLocalState(url)
 }
 
 func (o Options) routePrefix() string {

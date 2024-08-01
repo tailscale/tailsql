@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,17 +43,35 @@ var schema = &squibble.Schema{
 type localState struct {
 	// Exclusive: Write transaction
 	// Shared: Read transaction
-	txmu sync.RWMutex
-	db   *sql.DB
+	txmu   sync.RWMutex
+	rw, ro *sql.DB
 }
 
-// newLocalState constructs a new LocalState helper using the given database.
-func newLocalState(db *sql.DB) (*localState, error) {
-	if err := schema.Apply(context.Background(), db); err != nil {
-		db.Close()
+// newLocalState constructs a new LocalState helper for the given database URL.
+func newLocalState(url string) (*localState, error) {
+	if !strings.HasPrefix(url, "file:") {
+		url = "file:" + url
+	}
+	urlRO := url + "?mode=ro"
+
+	// Open separate copies of the database for writing query logs vs. serving
+	// queries to the UI.
+	rw, err := openAndPing("sqlite", url)
+	if err != nil {
+		return nil, err
+	}
+	if err := schema.Apply(context.Background(), rw); err != nil {
+		rw.Close()
 		return nil, fmt.Errorf("initializing schema: %w", err)
 	}
-	return &localState{db: db}, nil
+
+	ro, err := openAndPing("sqlite", urlRO)
+	if err != nil {
+		rw.Close()
+		return nil, err
+	}
+
+	return &localState{rw: rw, ro: ro}, nil
 }
 
 // LogQuery adds the specified query to the query log.
@@ -67,7 +86,7 @@ func (s *localState) LogQuery(ctx context.Context, user string, q Query, elapsed
 	}
 	s.txmu.Lock()
 	defer s.txmu.Unlock()
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.rw.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -98,7 +117,7 @@ func (s *localState) LogQuery(ctx context.Context, user string, q Query, elapsed
 func (s *localState) Query(ctx context.Context, query string, params ...any) (RowSet, error) {
 	s.txmu.RLock()
 	defer s.txmu.RUnlock()
-	return s.db.QueryContext(ctx, query, params...)
+	return s.ro.QueryContext(ctx, query, params...)
 }
 
 // Close satisfies part of the Queryable interface.  For this database the
