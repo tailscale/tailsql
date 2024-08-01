@@ -31,11 +31,14 @@ func TestCheckQuerySyntax(t *testing.T) {
 		// Basic disallowed stuff.
 		{`ATTACH DATABASE "foo" AS bar;`, false},
 		{`DETACH DATABASE bar;`, false},
+		{`VACUUM`, false},
+		{`VACUUM INTO '/dev/null';`, false},
 
 		// Things that should not be disallowed despite looking sus.
 		{`SELECT 'ATTACH DATABASE "foo" AS bar;' FROM hell;`, true},
 		{`-- attach database not really
         select * from a join b using (uid); -- ok  `, true},
+		{`-- vacuum into 'hell'`, true},
 
 		// Things that should be disallowed despite being sneaky.
 		{` -- hide me

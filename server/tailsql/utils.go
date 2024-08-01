@@ -217,11 +217,12 @@ func errorCode(err error) int {
 // A read-only SQLite database will correctly report errors for operations that
 // modify the database or its schema if it is opened read-only. However, the
 // ATTACH and DETACH verbs modify only the connection, permitting the caller to
-// mention any database accessible from the filesystem.
+// mention any database accessible from the filesystem. Similarly, VACUUM INTO
+// can be run even on a read-only database, so don't allow it in any form.
 func checkQuerySyntax(query string) error {
 	for _, tok := range sqlTokens(query) {
 		switch tok {
-		case "ATTACH", "DETACH", "TEMP", "TEMPORARY":
+		case "ATTACH", "DETACH", "TEMP", "TEMPORARY", "VACUUM":
 			return fmt.Errorf("statement %q is not allowed", tok)
 		}
 	}
