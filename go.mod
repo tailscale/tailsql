@@ -1,6 +1,8 @@
 module github.com/tailscale/tailsql
 
-go 1.22.0
+go 1.22.1
+
+toolchain go1.23.0
 
 require (
 	github.com/creachadair/ctrl v0.1.1
@@ -9,14 +11,14 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20240729215356-5eb656b60dfe
 	github.com/tailscale/squibble v0.0.0-20240601210838-24fce2c81b7f
-	honnef.co/go/tools v0.4.7
+	honnef.co/go/tools v0.5.0
 	modernc.org/sqlite v1.29.10
 	tailscale.com v1.71.0-pre.0.20240813233746-b4e595621f8f
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/BurntSushi/toml v1.3.2 // indirect
+	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
 	github.com/aws/aws-sdk-go-v2 v1.26.1 // indirect
