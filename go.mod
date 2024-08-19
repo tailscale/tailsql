@@ -13,7 +13,7 @@ require (
 	github.com/tailscale/squibble v0.0.0-20240601210838-24fce2c81b7f
 	honnef.co/go/tools v0.5.0
 	modernc.org/sqlite v1.29.10
-	tailscale.com v1.71.0-pre.0.20240813233746-b4e595621f8f
+	tailscale.com v1.72.0
 )
 
 require (
@@ -43,6 +43,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/coder/websocket v1.8.12 // indirect
 	github.com/coreos/go-iptables v0.7.1-0.20240112124308-65c67c9f46e6 // indirect
 	github.com/creachadair/mds v0.14.7 // indirect
 	github.com/dblohm7/wingoes v0.0.0-20240123200102-b75a8a7d7eb0 // indirect
@@ -120,5 +121,4 @@ require (
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
-	nhooyr.io/websocket v1.8.10 // indirect
 )
