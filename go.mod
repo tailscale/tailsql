@@ -1,6 +1,6 @@
 module github.com/tailscale/tailsql
 
-go 1.22.1
+go 1.23
 
 toolchain go1.23.0
 
@@ -11,9 +11,9 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20240729215356-5eb656b60dfe
 	github.com/tailscale/squibble v0.0.0-20240601210838-24fce2c81b7f
-	honnef.co/go/tools v0.5.0
+	honnef.co/go/tools v0.5.1
 	modernc.org/sqlite v1.29.10
-	tailscale.com v1.73.0-pre.0.20240820234010-7675c3ebf24d
+	tailscale.com v1.73.0-pre.0.20240822193108-696711cc17c4
 )
 
 require (
