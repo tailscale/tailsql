@@ -10,7 +10,7 @@ require (
 	github.com/klauspost/compress v1.17.8
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20240729215356-5eb656b60dfe
-	github.com/tailscale/squibble v0.0.0-20240601210838-24fce2c81b7f
+	github.com/tailscale/squibble v0.0.0-20240909231413-32a80b9743f7
 	honnef.co/go/tools v0.5.1
 	modernc.org/sqlite v1.29.10
 	tailscale.com v1.73.0-pre.0.20240822193108-696711cc17c4
@@ -45,7 +45,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/coder/websocket v1.8.12 // indirect
 	github.com/coreos/go-iptables v0.7.1-0.20240112124308-65c67c9f46e6 // indirect
-	github.com/creachadair/mds v0.14.7 // indirect
+	github.com/creachadair/mds v0.20.0 // indirect
 	github.com/dblohm7/wingoes v0.0.0-20240123200102-b75a8a7d7eb0 // indirect
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
