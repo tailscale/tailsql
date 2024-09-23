@@ -68,6 +68,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/tailscale/setec/client/setec"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/types/logger"
 	"tailscale.com/util/httpm"
@@ -119,7 +120,7 @@ type Server struct {
 	logf      logger.Logf
 
 	mu  sync.Mutex
-	dbs []*dbHandle
+	dbs []*setec.Updater[*dbHandle]
 }
 
 // NewServer constructs a new server with the given Options.
@@ -134,7 +135,7 @@ func NewServer(opts Options) (*Server, error) {
 		return nil, fmt.Errorf("have %d named secrets but no secret store", len(sec))
 	}
 
-	dbs, err := opts.openSources(opts.SecretStore)
+	dbs, err := opts.openSources(context.Background(), opts.SecretStore)
 	if err != nil {
 		return nil, fmt.Errorf("opening sources: %w", err)
 	}
@@ -143,14 +144,14 @@ func NewServer(opts Options) (*Server, error) {
 		return nil, fmt.Errorf("local state: %w", err)
 	}
 	if state != nil && opts.LocalSource != "" {
-		dbs = append(dbs, &dbHandle{
+		dbs = append(dbs, setec.StaticUpdater(&dbHandle{
 			src:   opts.LocalSource,
 			label: "tailsql local state",
 			db:    state,
 			named: map[string]string{
 				"schema": `select * from sqlite_schema`,
 			},
-		})
+		}))
 	}
 
 	if opts.Metrics != nil {
@@ -192,18 +193,18 @@ func (s *Server) SetSource(source string, db Queryable, opts *DBOptions) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, src := range s.dbs {
-		if src.Source() == source {
+	for _, u := range s.dbs {
+		if src := u.Get(); src.Source() == source {
 			src.swap(db, opts)
 			return true
 		}
 	}
-	s.dbs = append(s.dbs, &dbHandle{
+	s.dbs = append(s.dbs, setec.StaticUpdater(&dbHandle{
 		db:    db,
 		src:   source,
 		label: opts.label(),
 		named: opts.namedQueries(),
-	})
+	}))
 	return false
 }
 
@@ -613,12 +614,15 @@ func (s *Server) getHandles() []*dbHandle {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	out := make([]*dbHandle, len(s.dbs))
+
 	// Check for pending updates.
-	for _, h := range s.dbs {
-		h.tryUpdate()
+	for i, u := range s.dbs {
+		out[i] = u.Get()
+		out[i].tryUpdate()
 	}
 
 	// It is safe to return the slice because we never remove any elements, new
 	// data are only ever appended to the end.
-	return s.dbs
+	return out
 }
