@@ -199,8 +199,8 @@ github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7 h1:uFsXVBE9Qr4
 github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7/go.mod h1:NzVQi3Mleb+qzq8VmcWpSkcSYxXIg0DkI6XDzpVkhJ0=
 github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4 h1:Gz0rz40FvFVLTBk/K8UNAenb36EbDSnh+q7Z9ldcC8w=
 github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4/go.mod h1:phI29ccmHQBc+wvroosENp1IF9195449VDnFDhJ4rJU=
-github.com/tailscale/setec v0.0.0-20240729215356-5eb656b60dfe h1:uKpae9D8yEuqUuEqys45NYo3xFcEsBrJBX7JWilAwGc=
-github.com/tailscale/setec v0.0.0-20240729215356-5eb656b60dfe/go.mod h1:6xMcr3yo4pQchoVF7O+Az9A2D6M+9SD1Y8an+uy1ZoA=
+github.com/tailscale/setec v0.0.0-20240924182055-66c76d47f816 h1:rIRp7ytaQ1sjHlBUFocC1MsFnHJD43fnGg1Rwgql0F8=
+github.com/tailscale/setec v0.0.0-20240924182055-66c76d47f816/go.mod h1:nexjfRM8veJVJ5PTbqYI2YrUj/jbk3deffEHO3DH9Q4=
 github.com/tailscale/squibble v0.0.0-20240909231413-32a80b9743f7 h1:nfklwaP8uNz2IbUygSKOQ1aDzzRRRLaIbPpnQWUUMGc=
 github.com/tailscale/squibble v0.0.0-20240909231413-32a80b9743f7/go.mod h1:YH/J7n7jNZOq10nTxxPANv2ha/Eg47/6J5b7NnOYAhQ=
 github.com/tailscale/web-client-prebuilt v0.0.0-20240226180453-5db17b287bf1 h1:tdUdyPqJ0C97SJfjB9tW6EylTtreyee9C44de+UBG0g=
