@@ -112,12 +112,12 @@ func (o Options) checkQuery() func(Query) (Query, error) {
 // openSources opens database handles to each of the sources defined by o.
 // Sources that require secrets will get them from store.
 // Precondition: All the sources of o have already been validated.
-func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
+func (o Options) openSources(ctx context.Context, store *setec.Store) ([]*setec.Updater[*dbHandle], error) {
 	if len(o.Sources) == 0 {
 		return nil, nil
 	}
 
-	srcs := make([]*dbHandle, len(o.Sources))
+	srcs := make([]*setec.Updater[*dbHandle], len(o.Sources))
 	for i, spec := range o.Sources {
 		if spec.Label == "" {
 			spec.Label = "(unidentified database)"
@@ -125,20 +125,45 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 
 		// Case 1: A programmatic source.
 		if spec.DB != nil {
-			srcs[i] = &dbHandle{
+			srcs[i] = setec.StaticUpdater(&dbHandle{
 				src:   spec.Source,
 				label: spec.Label,
 				named: spec.Named,
 				db:    spec.DB,
-			}
+			})
 			continue
 		}
 
-		// Case 2: A database managed by database/sql.
-		//
-		// Resolve the connection string.
+		// Case 2: A database managed by database/sql, with a secret from setec.
+		if spec.Secret != "" {
+			// We actually only maintain a single value, that is updated in-place.
+			h := &dbHandle{src: spec.Source, label: spec.Label, named: spec.Named}
+			u, err := setec.NewUpdater(ctx, store, spec.Secret, func(secret []byte) (*dbHandle, error) {
+				db, err := openAndPing(spec.Driver, string(secret))
+				if err != nil {
+					return nil, err
+				}
+				o.logf()("[tailsql] opened new connection for source %q", spec.Source)
+				h.mu.Lock()
+				defer h.mu.Unlock()
+				if h.db != nil {
+					h.db.Close() // close the active handle
+				}
+				if up := h.checkUpdate(); up != nil {
+					up.newDB.Close() // close a previous pending update
+				}
+				h.db = sqlDB{DB: db}
+				return h, nil
+			})
+			if err != nil {
+				return nil, err
+			}
+			srcs[i] = u
+			continue
+		}
+
+		// Case 3: A database managed by database/sql, with a fixed URL.
 		var connString string
-		var w setec.Watcher
 		switch {
 		case spec.URL != "":
 			connString = spec.URL
@@ -148,9 +173,6 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 				return nil, fmt.Errorf("read key file for %q: %w", spec.Source, err)
 			}
 			connString = strings.TrimSpace(string(data))
-		case spec.Secret != "":
-			w = store.Watcher(spec.Secret)
-			connString = string(w.Get())
 		default:
 			panic("unexpected: no connection source is defined after validation")
 		}
@@ -160,16 +182,13 @@ func (o Options) openSources(store *setec.Store) ([]*dbHandle, error) {
 		if err != nil {
 			return nil, err
 		}
-		srcs[i] = &dbHandle{
+		srcs[i] = setec.StaticUpdater(&dbHandle{
 			src:    spec.Source,
 			driver: spec.Driver,
 			label:  spec.Label,
 			named:  spec.Named,
 			db:     sqlDB{DB: db},
-		}
-		if spec.Secret != "" {
-			go srcs[i].handleUpdates(spec.Secret, w, o.logf())
-		}
+		})
 	}
 	return srcs, nil
 }
@@ -323,33 +342,6 @@ type dbHandle struct {
 	label string
 	db    Queryable
 	named map[string]string
-}
-
-// handleUpdates polls w indefinitely for updates to the connection string for
-// h, and reopens the database with the new string when a new value arrives.
-// This method should be called in a goroutine.
-func (h *dbHandle) handleUpdates(name string, w setec.Watcher, logf logger.Logf) {
-	logf("[tailsql] starting updater for secret %q", name)
-	for range w.Ready() {
-		// N.B. Don't log the secret value itself. It's fine to log the name of
-		// the secret and the source, those are already in the config.
-		connString := string(w.Get())
-		db, err := openAndPing(h.driver, connString)
-		if err != nil {
-			logf("WARNING: opening new database for %q: %v", h.src, err)
-			continue
-		}
-		logf("[tailsql] opened new connection for source %q", h.src)
-		h.mu.Lock()
-		// Close the existing active handle.
-		h.db.Close()
-		// If there's a pending update, close it too.
-		if up := h.checkUpdate(); up != nil {
-			up.newDB.Close()
-		}
-		h.db = sqlDB{DB: db}
-		h.mu.Unlock()
-	}
 }
 
 // checkUpdate returns nil if there is no pending update, otherwise it swaps

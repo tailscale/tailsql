@@ -6,11 +6,13 @@ package tailsql_test
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"html"
 	"html/template"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -128,10 +130,17 @@ var testUIRules = []tailsql.UIRewriteRule{
 }
 
 func TestSecrets(t *testing.T) {
+	// Register a fake driver so we can probe for connection URLs.
+	// We have to use a new name each time, because there is no way to
+	// unregister and duplicate names trigger a panic.
+	driver := new(fakeDriver)
+	driverName := fmt.Sprintf("%s-driver-%d", t.Name(), rand.Int())
+	sql.Register(driverName, driver)
+	t.Logf("Test driver name is %q", driverName)
+
 	const secretName = "connection-string"
-	url, _ := mustInitSQLite(t)
 	db := setectest.NewDB(t, nil)
-	db.MustPut(db.Superuser, secretName, url)
+	db.MustPut(db.Superuser, secretName, "string 1")
 
 	ss := setectest.NewServer(t, db, nil)
 	hs := httptest.NewServer(ss.Mux)
@@ -141,17 +150,23 @@ func TestSecrets(t *testing.T) {
 		Sources: []tailsql.DBSpec{{
 			Source: "test",
 			Label:  "Test Database",
-			Driver: "sqlite",
+			Driver: driverName,
 			Secret: secretName,
 		}},
+		RoutePrefix: "/tsql",
 	}
+
+	// Verify we found the expected secret names in the options.
 	secrets, err := opts.CheckSources()
 	if err != nil {
 		t.Fatalf("Invalid sources: %v", err)
 	}
+
+	tick := setectest.NewFakeTicker()
 	st, err := setec.NewStore(context.Background(), setec.StoreConfig{
-		Client:  setec.Client{Server: hs.URL},
-		Secrets: secrets,
+		Client:     setec.Client{Server: hs.URL},
+		Secrets:    secrets,
+		PollTicker: tick,
 	})
 	if err != nil {
 		t.Fatalf("Creating setec store: %v", err)
@@ -162,7 +177,28 @@ func TestSecrets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Creating tailsql server: %v", err)
 	}
-	ts.Close()
+	ss.Mux.Handle("/tsql/", ts.NewMux()) // so we can call /meta below
+	defer ts.Close()
+
+	// After opening the server, the database should have the initial secret
+	// value provided on initialization.
+	if got, want := driver.OpenedURL, "string 1"; got != want {
+		t.Errorf("Initial URL: got %q, want %q", got, want)
+	}
+
+	// Update the secret.
+	db.MustActivate(db.Superuser, secretName, db.MustPut(db.Superuser, secretName, "string 2"))
+	tick.Poll()
+
+	// Make the database fetch the latest value.
+	if _, err := hs.Client().Get(hs.URL + "/tsql/meta"); err != nil {
+		t.Errorf("Get tailsql meta: %v", err)
+	}
+
+	// After the update, the database should have the new secret value.
+	if got, want := driver.OpenedURL, "string 2"; got != want {
+		t.Errorf("Updated URL: got %q, want %q", got, want)
+	}
 }
 
 func TestServer(t *testing.T) {
@@ -567,3 +603,18 @@ func TestRoutePrefix(t *testing.T) {
 		}
 	})
 }
+
+type fakeDriver struct {
+	OpenedURL string
+}
+
+func (f *fakeDriver) Open(url string) (driver.Conn, error) {
+	f.OpenedURL = url
+	return fakeConn{}, nil
+}
+
+// fakeConn is a fake implementation of driver.Conn to satisfy the interface,
+// it will panic if actually used.
+type fakeConn struct{ driver.Conn }
+
+func (fakeConn) Close() error { return nil }

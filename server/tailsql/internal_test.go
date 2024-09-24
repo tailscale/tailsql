@@ -4,6 +4,7 @@
 package tailsql
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
@@ -90,13 +91,14 @@ func TestOptions(t *testing.T) {
 
 	// Test that we can populate options from the config.
 	t.Run("Options", func(t *testing.T) {
-		dbs, err := opts.openSources(nil)
+		dbs, err := opts.openSources(context.Background(), nil)
 		if err != nil {
 			t.Fatalf("Options: unexpected error: %v", err)
 		}
 
 		// The handles should be equinumerous and in the same order as the config.
-		for i, h := range dbs {
+		for i, u := range dbs {
+			h := u.Get()
 			if got, want := h.Source(), opts.Sources[i].Source; got != want {
 				t.Errorf("Database %d: got src %q, want %q", i+1, got, want)
 			}
