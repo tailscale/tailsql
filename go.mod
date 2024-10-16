@@ -9,10 +9,10 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/klauspost/compress v1.17.8
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
-	github.com/tailscale/setec v0.0.0-20240924182055-66c76d47f816
+	github.com/tailscale/setec v0.0.0-20240930150730-e6eb93658ed3
 	github.com/tailscale/squibble v0.0.0-20240909231413-32a80b9743f7
 	honnef.co/go/tools v0.5.1
-	modernc.org/sqlite v1.29.10
+	modernc.org/sqlite v1.33.1
 	tailscale.com v1.73.0-pre.0.20240909191529-0970615b1b45
 )
 
@@ -115,7 +115,7 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20240722211153-64c016c92987 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
-	modernc.org/libc v1.49.3 // indirect
+	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
