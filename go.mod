@@ -1,8 +1,8 @@
 module github.com/tailscale/tailsql
 
-go 1.23
+go 1.23.1
 
-toolchain go1.23.0
+toolchain go1.23.3
 
 require (
 	github.com/creachadair/ctrl v0.1.1
@@ -13,7 +13,7 @@ require (
 	github.com/tailscale/squibble v0.0.0-20240909231413-32a80b9743f7
 	honnef.co/go/tools v0.5.1
 	modernc.org/sqlite v1.33.1
-	tailscale.com v1.73.0-pre.0.20240909191529-0970615b1b45
+	tailscale.com v1.76.6
 )
 
 require (
@@ -101,7 +101,7 @@ require (
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
-	golang.org/x/exp/typeparams v0.0.0-20240119083558-1b970713d09a // indirect
+	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
