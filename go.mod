@@ -7,13 +7,17 @@ toolchain go1.23.3
 require (
 	github.com/creachadair/ctrl v0.1.1
 	github.com/google/go-cmp v0.6.0
-	github.com/klauspost/compress v1.17.8
+	github.com/klauspost/compress v1.17.11
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tailscale/setec v0.0.0-20240930150730-e6eb93658ed3
 	github.com/tailscale/squibble v0.0.0-20240909231413-32a80b9743f7
 	honnef.co/go/tools v0.5.1
 	modernc.org/sqlite v1.33.1
+<<<<<<< Updated upstream
 	tailscale.com v1.76.6
+=======
+	tailscale.com v1.77.0-pre.0.20241120142234-ebeb5da202c0
+>>>>>>> Stashed changes
 )
 
 require (
@@ -91,7 +95,7 @@ require (
 	github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7 // indirect
 	github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4 // indirect
 	github.com/tailscale/web-client-prebuilt v0.0.0-20240226180453-5db17b287bf1 // indirect
-	github.com/tailscale/wireguard-go v0.0.0-20240905161824-799c1978fafc // indirect
+	github.com/tailscale/wireguard-go v0.0.0-20241113014420-4e883d38c8d3 // indirect
 	github.com/tcnksm/go-httpstat v0.2.0 // indirect
 	github.com/tink-crypto/tink-go/v2 v2.1.0 // indirect
 	github.com/u-root/uio v0.0.0-20240118234441-a3c409a6018e // indirect
@@ -104,8 +108,8 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
