@@ -27,7 +27,7 @@ git checkout --quiet main && git pull --rebase --quiet
 have="$(go list -f '{{.Version}}' -m "$module" | cut -d- -f3)"
 want="$(
   gh api -q '.content|@base64d' repos/"${repo}"/contents/go.mod |
-  grep -E "\b${module}\b" | cut -d' ' -f2 | cut -d- -f3
+  grep -E "\b${module} " | cut -d' ' -f2 | cut -d- -f3
 )"
 if [[ "$have" = "$want" ]] ; then
     echo "Module $module is up-to-date at commit $have" 1>&2
