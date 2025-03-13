@@ -300,5 +300,5 @@ modernc.org/token v1.1.0 h1:Xl7Ap9dKaEs5kLoOQeQmPWevfnk/DM5qcLcYlA8ys6Y=
 modernc.org/token v1.1.0/go.mod h1:UGzOrNV1mAFSEB63lOFHIpNRUVMvYTc6yu1SMY/XTDM=
 software.sslmate.com/src/go-pkcs12 v0.4.0 h1:H2g08FrTvSFKUj+D309j1DPfk5APnIdAQAB8aEykJ5k=
 software.sslmate.com/src/go-pkcs12 v0.4.0/go.mod h1:Qiz0EyvDRJjjxGyUQa2cCNZn/wMyzrRJ/qcDXOQazLI=
-tailscale.com v1.81.0-pre.0.20250303195457-5449aba94c51 h1:OFXbtx+IcmimElUm0ZtRkD/4shX4QFjc7J9cecHJ8XQ=
-tailscale.com v1.81.0-pre.0.20250303195457-5449aba94c51/go.mod h1:vhy1j4UGZI67Xlto4G2L6CDYetgUiaYyD9s8YCzvmRc=
+tailscale.com v1.81.0-pre.0.20250313022125-45ecc0f85a96 h1:QfrXeP7xr/68vsRUFNBb4NayplQTvPv+GsfF2FBRS0I=
+tailscale.com v1.81.0-pre.0.20250313022125-45ecc0f85a96/go.mod h1:vhy1j4UGZI67Xlto4G2L6CDYetgUiaYyD9s8YCzvmRc=
