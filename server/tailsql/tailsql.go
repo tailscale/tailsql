@@ -173,7 +173,7 @@ func NewServer(opts Options) (*Server, error) {
 }
 
 // SetDB adds or replaces the database associated with the specified source in
-// s with the given open db and options. See [SetSource].
+// s with the given open db and options. See [Server.SetSource].
 func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 	return s.SetSource(source, sqlDB{DB: db}, opts)
 }
@@ -185,7 +185,7 @@ func (s *Server) SetDB(source string, db *sql.DB, opts *DBOptions) bool {
 // the old database handle is closed, and SetDB reports true.
 //
 // If no database was already open for the given source, a new source is added
-// and SetDB reports false.
+// and SetSource reports false.
 func (s *Server) SetSource(source string, db Queryable, opts *DBOptions) bool {
 	if db == nil {
 		panic("new database is nil")
