@@ -3,6 +3,8 @@
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=peru)](https://pkg.go.dev/github.com/tailscale/tailsql)
 [![CI](https://github.com/tailscale/tailsql/actions/workflows/go-presubmit.yml/badge.svg?event=push&branch=main)](https://github.com/tailscale/tailsql/actions/workflows/go-presubmit.yml)
 
+> [!NOTE]
+> Please file issues in our [main open-source repository](https://github.com/tailscale/tailscale/issues).
 
 TailSQL is a self-contained SQL playground service that runs on [Tailscale](https://tailscale.com).
 It permits users to query SQL databases from a basic web-based UI, with support for any database
