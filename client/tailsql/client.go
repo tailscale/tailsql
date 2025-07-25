@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/klauspost/compress/zstd"
 	server "github.com/tailscale/tailsql/server/tailsql"
 )
 
@@ -120,6 +121,7 @@ func callGET(ctx context.Context, do func(*http.Request) (*http.Response, error)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
 	}
+	req.Header.Set("Accept-Encoding", "zstd")
 	req.Header.Set("Sec-Tailsql", "ok")
 	rsp, err := do(req)
 	if err != nil {
@@ -135,6 +137,14 @@ func callGET(ctx context.Context, do func(*http.Request) (*http.Response, error)
 			msg = msg[:maxErrorLen-3] + "..."
 		}
 		return nil, errors.New(msg)
+	}
+	if rsp.Header.Get("Content-Encoding") == "zstd" {
+		dec, err := zstd.NewReader(rsp.Body)
+		if err != nil {
+			rsp.Body.Close()
+			return nil, fmt.Errorf("new zstd decoder: %w", err)
+		}
+		return dec.IOReadCloser(), nil
 	}
 	return rsp.Body, nil
 }
