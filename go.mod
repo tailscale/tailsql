@@ -2,8 +2,6 @@ module github.com/tailscale/tailsql
 
 go 1.24.4
 
-toolchain go1.24.5
-
 require (
 	github.com/creachadair/ctrl v0.1.1
 	github.com/google/go-cmp v0.7.0

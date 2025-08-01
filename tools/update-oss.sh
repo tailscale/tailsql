@@ -35,6 +35,7 @@ if [[ "$have" = "$want" ]] ; then
 fi
 
 go get "$module"@"$want"
+go mod edit --toolchain=none
 go mod tidy
 echo "Module $module updated to commit $want" 1>&2
 echo "(you must commit and push this change to persist it)" 1>&2
