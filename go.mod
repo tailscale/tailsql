@@ -1,6 +1,8 @@
 module github.com/tailscale/tailsql
 
-go 1.24.0
+go 1.24.4
+
+toolchain go1.24.5
 
 require (
 	github.com/creachadair/ctrl v0.1.1
@@ -11,7 +13,7 @@ require (
 	github.com/tailscale/squibble v0.0.0-20250108170732-a4ca58afa694
 	honnef.co/go/tools v0.6.1
 	modernc.org/sqlite v1.38.0
-	tailscale.com v1.85.0-pre.0.20250523030259-7a5af6e6e7d4
+	tailscale.com v1.87.0-pre.0.20250728175739-4df02bbb486d
 )
 
 require (
@@ -75,7 +77,7 @@ require (
 	github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7 // indirect
 	github.com/tailscale/peercred v0.0.0-20250107143737-35a0c7bd7edc // indirect
 	github.com/tailscale/web-client-prebuilt v0.0.0-20250124233751-d4cd19a26976 // indirect
-	github.com/tailscale/wireguard-go v0.0.0-20250304000100-91a0587fb251 // indirect
+	github.com/tailscale/wireguard-go v0.0.0-20250716170648-1d0488a3d7da // indirect
 	github.com/tink-crypto/tink-go/v2 v2.1.0 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -90,7 +92,7 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/time v0.10.0 // indirect
+	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
