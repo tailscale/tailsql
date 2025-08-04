@@ -596,9 +596,9 @@ func (s *Server) checkAuth(w http.ResponseWriter, r *http.Request, src, query st
 		caller = whois.UserProfile.LoginName
 	}
 
-	// If the caller wants the UI and didn't send a query, allow it.
+	// If the caller wants the UI or metadata, and didn't send a query, allow it.
 	// The source does not matter when there is no query.
-	if r.URL.Path == "/" && query == "" {
+	if (r.URL.Path == "/" || r.URL.Path == "/meta") && query == "" {
 		return caller, true
 	}
 	if err := s.authorize(src, whois); err != nil {
