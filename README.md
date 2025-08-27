@@ -174,7 +174,7 @@ opts := tailsql.Options{
 
 ### Authorization
 
-By default, the server does not do any authorization. The `LocalClient` option allows you to plug the server in to Tailscale: If this option is set, it is used to resolve callers and only logged-in users will be permitted to make queries. (You could theoretically also implement your own thing without Tailscale, but that would be a lot of work for very little benefit).
+By default, the server does not do any authorization. The `LocalClient` option allows you to plug the server in to Tailscale: If this option is set, it is used to resolve callers and only logged-in users will be permitted to make queries. (You could theoretically also implement this interface without Tailscale).
 
 To further customize authorization, you can provide a callback via the `Authorize` option. The [authorizer][authz] package provides some pre-defined implementations, or you can roll your own. This is useful if you want to expose multiple data sources, some of which have more restrictive access policies.
 
