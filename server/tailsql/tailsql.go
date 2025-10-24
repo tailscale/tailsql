@@ -226,7 +226,7 @@ func (s *Server) NewMux() *http.ServeMux {
 
 	// N.B. We have to strip the prefix back off for the static files, since the
 	// embedded FS thinks it is rooted at "/".
-	mux.Handle(s.prefix+"/static/", http.StripPrefix(s.prefix, http.FileServer(http.FS(staticFS))))
+	mux.Handle(s.prefix+"/static/", http.StripPrefix(s.prefix, http.FileServerFS(staticFS)))
 	return mux
 }
 
