@@ -43,7 +43,7 @@
   <div class="details">
     <span>Query time: {{.Elapsed}}</span>
     <span>{{.NumRows}} rows{{if .More}} fetched (additional rows not loaded){{else}} total{{end}}</span>{{if .Trunc}}
-    <span>(display is truncated)</span>{{end}}
+    <span>(display truncated to {{len .Rows}} rows)</span>{{end}}
   </div>
 <table>
 <tr>{{range .Columns}}
