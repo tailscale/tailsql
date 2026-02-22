@@ -3,7 +3,8 @@ module github.com/tailscale/tailsql
 go 1.24.4
 
 require (
-	github.com/creachadair/ctrl v0.1.1
+	github.com/creachadair/command v0.1.22
+	github.com/creachadair/flax v0.0.4
 	github.com/google/go-cmp v0.7.0
 	github.com/klauspost/compress v1.18.0
 	github.com/tailscale/hujson v0.0.0-20250605163823-992244df8c5a

@@ -9,17 +9,16 @@ import (
 	"context"
 	"errors"
 	"expvar"
-	"flag"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
-	"github.com/creachadair/ctrl"
+	"github.com/creachadair/command"
+	"github.com/creachadair/flax"
 	"github.com/tailscale/tailsql/server/tailsql"
 	"github.com/tailscale/tailsql/uirules"
 	"tailscale.com/atomicfile"
@@ -36,79 +35,75 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var (
-	localPort  = flag.Int("local", 0, "Local service port")
-	configPath = flag.String("config", "", "Configuration file (HuJSON, required)")
-	doDebugLog = flag.Bool("debug", false, "Enable very verbose tsnet debug logging")
-	initConfig = flag.String("init-config", "",
-		"Generate a basic configuration file in the given path and exit")
-)
+var flags struct {
+	LocalPort  int    `flag:"local,Local service port"`
+	ConfigPath string `flag:"config,Configuration file (HuJSON, required)"`
+	DebugLog   bool   `flag:"debug,Enable very verbose tsnet debug logging"`
+	InitConfig string `flag:"init-config,Generate a basic configuration file in the given path and exit"`
+}
 
-func init() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `Usage: %[1]s [options] --config config.json
-       %[1]s --init-config demo.json
+func main() {
+	root := &command.C{
+		Name: command.ProgramName(),
+		Usage: `[options] --config config.json
+--init-config demo.json`,
 
-Run a TailSQL service with the specified --config file.
+		Help: `Run a TailSQL service with the specified --config file.
 
 If --local > 0, the service is run on localhost at that port.
 Otherwise, the server starts a Tailscale node at the configured hostname.
 
 When run with --init-config set, %[1]s generates an example configuration file
-with defaults suitable for running a local service and then exits.
+with defaults suitable for running a local service and then exits.`,
 
-Options:
-`, filepath.Base(os.Args[0]))
-		flag.PrintDefaults()
+		SetFlags: command.Flags(flax.MustBind, &flags),
+
+		Run: func(env *command.Env) error {
+			// Case 1: Generate a semple configuration file and exit.
+			if flags.InitConfig != "" {
+				return generateBasicConfig(flags.InitConfig)
+			} else if flags.ConfigPath == "" {
+				return env.Usagef("You must provide a non-empty --config path")
+			}
+
+			// For all the cases below, we need a valid configuration file.
+			data, err := os.ReadFile(flags.ConfigPath)
+			if err != nil {
+				return fmt.Errorf("reading tailsql config: %w", err)
+			}
+			var opts tailsql.Options
+			if err := tailsql.UnmarshalOptions(data, &opts); err != nil {
+				return fmt.Errorf("parsing tailsql config: %w", err)
+			}
+			opts.Metrics = expvar.NewMap("tailsql")
+			opts.UIRewriteRules = []tailsql.UIRewriteRule{
+				uirules.FormatSQLSource,
+				uirules.FormatJSONText,
+				uirules.LinkURLText,
+			}
+
+			ctx, cancel := signal.NotifyContext(env.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
+
+			// Case 2: Run unencrypted on a local port.
+			if flags.LocalPort > 0 {
+				return runLocalService(ctx, opts, flags.LocalPort)
+			}
+
+			// Case 3: Run on a tailscale node.
+			if opts.Hostname == "" {
+				return env.Usagef("You must provide a non-empty Tailscale hostname")
+			}
+			return runTailscaleService(ctx, opts)
+		},
 	}
-}
-
-func main() {
-	flag.Parse()
-	ctrl.Run(func() error {
-		// Case 1: Generate a semple configuration file and exit.
-		if *initConfig != "" {
-			return generateBasicConfig(*initConfig)
-		} else if *configPath == "" {
-			ctrl.Fatalf("You must provide a non-empty --config path")
-		}
-
-		// For all the cases below, we need a valid configuration file.
-		data, err := os.ReadFile(*configPath)
-		if err != nil {
-			ctrl.Fatalf("Reading tailsql config: %v", err)
-		}
-		var opts tailsql.Options
-		if err := tailsql.UnmarshalOptions(data, &opts); err != nil {
-			ctrl.Fatalf("Parsing tailsql config: %v", err)
-		}
-		opts.Metrics = expvar.NewMap("tailsql")
-		opts.UIRewriteRules = []tailsql.UIRewriteRule{
-			uirules.FormatSQLSource,
-			uirules.FormatJSONText,
-			uirules.LinkURLText,
-		}
-
-		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-		defer cancel()
-
-		// Case 2: Run unencrypted on a local port.
-		if *localPort > 0 {
-			return runLocalService(ctx, opts, *localPort)
-		}
-
-		// Case 3: Run on a tailscale node.
-		if opts.Hostname == "" {
-			ctrl.Fatalf("You must provide a non-empty Tailscale hostname")
-		}
-		return runTailscaleService(ctx, opts)
-	})
+	command.RunOrFail(root.NewEnv(nil), os.Args[1:])
 }
 
 func runLocalService(ctx context.Context, opts tailsql.Options, port int) error {
 	tsql, err := tailsql.NewServer(opts)
 	if err != nil {
-		ctrl.Fatalf("Creating tailsql server: %v", err)
+		return fmt.Errorf("creating tailsql server: %w", err)
 	}
 
 	mux := tsql.NewMux()
@@ -126,7 +121,7 @@ func runLocalService(ctx context.Context, opts tailsql.Options, port int) error 
 	}()
 	log.Printf("Starting local tailsql at http://%s", hsrv.Addr+opts.RoutePrefix)
 	if err := hsrv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		ctrl.Fatalf(err.Error())
+		return err
 	}
 	return nil
 }
@@ -137,7 +132,7 @@ func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
 		Hostname: opts.Hostname,
 		Logf:     logger.Discard,
 	}
-	if *doDebugLog {
+	if flags.DebugLog {
 		tsNode.Logf = log.Printf
 	}
 	defer tsNode.Close()
@@ -145,14 +140,14 @@ func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
 	log.Printf("Starting tailscale (hostname=%q)", opts.Hostname)
 	lc, err := tsNode.LocalClient()
 	if err != nil {
-		ctrl.Fatalf("Connect local client: %v", err)
+		return fmt.Errorf("connect local client: %w", err)
 	}
 	opts.LocalClient = lc // for authentication
 
 	// Make sure the Tailscale node starts up. It might not, if it is a new node
 	// and the user did not provide an auth key.
 	if st, err := tsNode.Up(ctx); err != nil {
-		ctrl.Fatalf("Starting tailscale: %v", err)
+		return fmt.Errorf("starting tailscale: %w", err)
 	} else {
 		log.Printf("Tailscale started, node state %q", st.BackendState)
 	}
@@ -161,19 +156,19 @@ func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
 	// HTTP and/or HTTPS plumbing for TailSQL itself.
 	tsql, err := tailsql.NewServer(opts)
 	if err != nil {
-		ctrl.Fatalf("Creating tailsql server: %v", err)
+		return fmt.Errorf("creating tailsql server: %w", err)
 	}
 
 	lst, err := tsNode.Listen("tcp", ":80")
 	if err != nil {
-		ctrl.Fatalf("Listen port 80: %v", err)
+		return fmt.Errorf("listen port 80: %w", err)
 	}
 
 	if opts.ServeHTTPS {
 		// When serving TLS, add a redirect from HTTP on port 80 to HTTPS on 443.
 		certDomains := tsNode.CertDomains()
 		if len(certDomains) == 0 {
-			ctrl.Fatalf("No cert domains available for HTTPS")
+			return errors.New("no cert domains available for HTTPS")
 		}
 		base := "https://" + certDomains[0]
 		go http.Serve(lst, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +182,7 @@ func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
 		var err error
 		lst, err = tsNode.ListenTLS("tcp", ":443")
 		if err != nil {
-			ctrl.Fatalf("Listen TLS: %v", err)
+			return fmt.Errorf("listen TLS: %w", err)
 		}
 		log.Print("Enabled serving via HTTPS")
 	}
@@ -207,7 +202,7 @@ var sampleConfig string
 func generateBasicConfig(path string) error {
 	t, err := template.New("sample").Delims("@{", "}@").Parse(sampleConfig)
 	if err != nil {
-		ctrl.Fatalf("Parse config template: %v", err)
+		return fmt.Errorf("parse config template: %w", err)
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, tailsql.Options{
@@ -228,16 +223,16 @@ func generateBasicConfig(path string) error {
 			URL:    "https://github.com/tailscale/tailsql",
 		}},
 	}); err != nil {
-		ctrl.Fatalf("Generate sample config: %v", err)
+		return fmt.Errorf("generate sample config: %w", err)
 	}
 
 	// Verify that the generated sample is valid, in case the template got broken.
 	//lint:ignore S1030 We clone the data because HuJSON clobbers its input slice.
 	if err := tailsql.UnmarshalOptions([]byte(buf.String()), new(tailsql.Options)); err != nil {
-		ctrl.Fatalf("Verifying sample config: %v", err)
+		return fmt.Errorf("verifying sample config: %w", err)
 	}
 	if err := atomicfile.WriteFile(path, buf.Bytes(), 0644); err != nil {
-		ctrl.Fatalf("Writing sample config: %v", err)
+		return fmt.Errorf("writing sample config: %w", err)
 	}
 	log.Printf("Generated sample config in %s", path)
 	return nil
