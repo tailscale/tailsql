@@ -39,6 +39,10 @@ type Options struct {
 	// If true, serve HTTPS instead of HTTP (tsnet).
 	ServeHTTPS bool `json:"serveHTTPS,omitempty"`
 
+	// The URL of the coordination server to use (tsnet).
+	// If empty, the Tailscale default is used.
+	ControlURL string `json:"controlURL,omitempty"`
+
 	// If non-empty, a SQLite database URL to use for local state.
 	LocalState string `json:"localState,omitempty"`
 

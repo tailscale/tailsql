@@ -128,9 +128,10 @@ func runLocalService(ctx context.Context, opts tailsql.Options, port int) error 
 
 func runTailscaleService(ctx context.Context, opts tailsql.Options) error {
 	tsNode := &tsnet.Server{
-		Dir:      os.ExpandEnv(opts.StateDir),
-		Hostname: opts.Hostname,
-		Logf:     logger.Discard,
+		Dir:        os.ExpandEnv(opts.StateDir),
+		Hostname:   opts.Hostname,
+		ControlURL: opts.ControlURL,
+		Logf:       logger.Discard,
 	}
 	if flags.DebugLog {
 		tsNode.Logf = log.Printf
