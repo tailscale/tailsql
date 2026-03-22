@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
@@ -39,12 +40,25 @@ func ACLGrants(logf logger.Logf) func(string, *apitype.WhoIsResponse) error {
 			return errors.New("not authorized for access to tailsql")
 		}
 		for _, rule := range rules {
-			for _, s := range rule.DataSrc {
-				if s == "*" || s == dataSrc {
+			for _, grant := range rule.DataSrc {
+				if MatchSource(grant, dataSrc) {
 					return nil
 				}
 			}
 		}
 		return fmt.Errorf("not authorized for access to %q", dataSrc)
 	}
+}
+
+// MatchSource reports whether grant pattern 'grant' matches dataSrc.
+// It supports exact matches, "*" to match everything, and prefix patterns
+// like "shard*" where the pattern ends in "*" and the prefix must match.
+func MatchSource(grant, dataSrc string) bool {
+	if grant == "*" || grant == dataSrc {
+		return true
+	}
+	if prefix, ok := strings.CutSuffix(grant, "*"); ok && len(prefix) > 0 {
+		return strings.HasPrefix(dataSrc, prefix)
+	}
+	return false
 }

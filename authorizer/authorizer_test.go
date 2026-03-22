@@ -36,7 +36,46 @@ var (
 			},
 		},
 	}
+	prefixUser = &apitype.WhoIsResponse{
+		Node: &tailcfg.Node{Name: "fake.ts.net"},
+		UserProfile: &tailcfg.UserProfile{
+			ID: 1, LoginName: "user@example.com", DisplayName: "Some P. User",
+		},
+		CapMap: tailcfg.PeerCapMap{
+			tailsqlCap: []tailcfg.RawMessage{
+				`{"src":["shard*","exact"]}`,
+			},
+		},
+	}
 )
+
+func TestMatchSource(t *testing.T) {
+	tests := []struct {
+		pattern string
+		dataSrc string
+		want    bool
+	}{
+		{"*", "anything", true},
+		{"main", "main", true},
+		{"main", "other", false},
+		{"shard*", "shard1", true},
+		{"shard*", "shard-foo", true},
+		{"shard*", "shard", true},
+		{"shard*", "other", false},
+		{"s*", "shard1", true},
+		{"s*", "abc", false},
+		{"*", "", true},          // wildcard matches empty
+		{"foo*", "foo", true},    // prefix without extra chars
+		{"foo*", "foobar", true}, // prefix with extra chars
+		{"foo*", "fo", false},    // too short
+	}
+	for _, tc := range tests {
+		got := authorizer.MatchSource(tc.pattern, tc.dataSrc)
+		if got != tc.want {
+			t.Errorf("MatchSource(%q, %q) = %v, want %v", tc.pattern, tc.dataSrc, got, tc.want)
+		}
+	}
+}
 
 func TestACLGrants(t *testing.T) {
 	auth := authorizer.ACLGrants(t.Logf)
@@ -51,6 +90,12 @@ func TestACLGrants(t *testing.T) {
 		{"main", loggedInUser, true},
 		{"alt", loggedInUser, false},
 		{"other", loggedInUser, false},
+
+		// Prefix pattern grants.
+		{"shard1", prefixUser, true},
+		{"shard-foo", prefixUser, true},
+		{"exact", prefixUser, true},
+		{"other", prefixUser, false},
 	}
 
 	for _, tc := range tests {
