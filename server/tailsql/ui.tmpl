@@ -21,6 +21,7 @@
     <div class="action">
       <span><button id="send-query" class="ctrl" title="query">Query</button></span>
       <span><button class="ctrl" id="dl-button" title="download">Download as CSV</button></span>
+      <span><button class="ctrl" id="save-query" title="save query">Save Query</button></span>
       <span><label>Source: <select id="sources" class="ctrl" name="src">{{range $s := .Sources}}
         <option class="ctrl" value="{{$s.Source}}"{{if eq $.Source .Source}} selected{{end}}>{{$s.Label}}</option>
       {{end}}</select></label></span>
@@ -31,6 +32,17 @@
   <span class="label">Links:</span>{{range .}}
   <span><a href="{{.URL}}" target="_blank">{{.Anchor}}</a></span>{{end}}
 </div>{{end}}
+
+<div id="query-panels">
+  <details id="history-panel">
+    <summary>History <span id="clear-history" class="clear-link">(clear)</span></summary>
+    <ul id="history-list"></ul>
+  </details>
+  <details id="saved-panel">
+    <summary>Saved Queries</summary>
+    <ul id="saved-query-list"></ul>
+  </details>
+</div>
 
 {{with .Error}}
 <div id="error" class="output"><div class="error">
