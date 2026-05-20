@@ -190,6 +190,70 @@ div.action {
   display: none;
 }
 
+#query-panels {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+#query-panels details {
+  flex: 1;
+  border: 1px solid rgba(27, 31, 35, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+#query-panels summary {
+  font-size: 80%;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-colname);
+  border-bottom: 1px solid rgba(27, 31, 35, 0.15);
+}
+#query-panels ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+#query-panels li {
+  font-family: "andale mono", verdana, monospace;
+  font-size: 60%;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(27, 31, 35, 0.06);
+}
+#query-panels li:last-child {
+  border-bottom: none;
+}
+#query-panels li:hover {
+  background: var(--bg-colname);
+}
+#query-panels li .query-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#query-panels li .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 0 0.2rem;
+}
+#query-panels li .query-name {
+  font-family: var(--body-font);
+  font-weight: 600;
+}
+.clear-link {
+  font-weight: normal;
+  font-size: 90%;
+  color: var(--text-light);
+  cursor: pointer;
+}
 #nut {
   transform: scale(1.5);
   position: relative;
