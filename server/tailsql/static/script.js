@@ -136,6 +136,12 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
         const h = getHistory();
         for (const entry of h) {
             const li = document.createElement('li');
+            if (entry.source) {
+                const src = document.createElement('span');
+                src.className = 'query-source';
+                src.textContent = entry.source;
+                li.appendChild(src);
+            }
             const span = document.createElement('span');
             span.className = 'query-text';
             span.textContent = entry.query;
@@ -163,6 +169,12 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
         for (let i = 0; i < s.length; i++) {
             const entry = s[i];
             const li = document.createElement('li');
+            if (entry.source) {
+                const src = document.createElement('span');
+                src.className = 'query-source';
+                src.textContent = entry.source;
+                li.appendChild(src);
+            }
             const name = document.createElement('span');
             name.className = 'query-name';
             name.textContent = entry.name + ':';
@@ -186,6 +198,14 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
             li.appendChild(del);
             li.addEventListener('click', () => {
                 query.value = entry.query;
+                if (sources && entry.source) {
+                    for (const opt of sources.options) {
+                        if (opt.value === entry.source) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                }
                 query.focus();
             });
             savedList.appendChild(li);
@@ -210,7 +230,7 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
         const name = prompt('Name for this query:');
         if (!name) return;
         const s = getSavedQueries();
-        s.push({ query: q, name: name.trim() });
+        s.push({ query: q, name: name.trim(), source: sources.value });
         setSavedQueries(s);
         renderSavedQueries();
     });

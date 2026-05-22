@@ -244,6 +244,11 @@ div.action {
   color: var(--text-light);
   padding: 0 0.2rem;
 }
+#query-panels li .query-source {
+  flex: 0 0 auto;
+  color: var(--text-light);
+  font-size: 90%;
+}
 #query-panels li .query-name {
   font-family: var(--body-font);
   font-weight: 600;
