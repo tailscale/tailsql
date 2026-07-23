@@ -7,6 +7,7 @@ package authorizer
 import (
 	"fmt"
 	"log"
+	"slices"
 
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/types/logger"
@@ -43,10 +44,8 @@ func (m Map) Authorize(logf logger.Logf) func(string, *apitype.WhoIsResponse) er
 		if !ok {
 			return nil // no restriction on this source
 		}
-		for _, u := range users {
-			if u == caller {
-				return nil // this user is permitted access
-			}
+		if slices.Contains(users, caller) {
+			return nil // this user is permitted access
 		}
 		return fmt.Errorf("not authorized for access to %q", src)
 	}
