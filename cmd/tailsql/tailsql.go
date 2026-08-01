@@ -78,6 +78,7 @@ with defaults suitable for running a local service and then exits.`,
 			opts.Metrics = expvar.NewMap("tailsql")
 			opts.UIRewriteRules = []tailsql.UIRewriteRule{
 				uirules.FormatSQLSource,
+				uirules.WrapNumber,
 				uirules.FormatJSONText,
 				uirules.LinkURLText,
 			}
