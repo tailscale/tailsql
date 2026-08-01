@@ -98,6 +98,9 @@ div.error {
   background: var(--bg-colname);
   border-style: solid;
 }
+.output td:has(span.number) {
+  text-align: right;
+}
 
 .logo {
   display: flex;
