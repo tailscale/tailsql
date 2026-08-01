@@ -84,6 +84,8 @@ div.error {
 .output table  {
   min-width: 25%;
   border-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
 }
 .output td, .output th {
   border: 1px dotted var(--cell-border);
