@@ -71,3 +71,13 @@ var LinkURLText = tailsql.UIRewriteRule{
 		return s
 	},
 }
+
+// WrapNumber is a UI rewrite rule that wraps "number-shaped" values in a span
+// with the "number" class, to allow special styling to apply.
+var WrapNumber = tailsql.UIRewriteRule{
+	Value: regexp.MustCompile(`^-?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?$`),
+	Apply: func(col, s string, _ []string) any {
+		esc := template.HTMLEscapeString(s)
+		return template.HTML(fmt.Sprintf(`<span class=number>%s</span>`, esc))
+	},
+}

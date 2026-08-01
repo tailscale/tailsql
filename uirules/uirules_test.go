@@ -50,6 +50,13 @@ func TestRules(t *testing.T) {
 		{uirules.LinkURLText, "http://localhost:8080/foo?bar", true,
 			template.HTML(`<a href="http://localhost:8080/foo?bar" referrerpolicy=no-referrer ` +
 				`rel=noopener>http://localhost:8080/foo?bar</a>`)},
+
+		{uirules.WrapNumber, "12345", true, template.HTML(`<span class=number>12345</span>`)},
+		{uirules.WrapNumber, "1.abc", false, nil},
+		{uirules.WrapNumber, "-101", true, template.HTML(`<span class=number>-101</span>`)},
+		{uirules.WrapNumber, "9e72", true, template.HTML(`<span class=number>9e72</span>`)},
+		{uirules.WrapNumber, "0.5432", true, template.HTML(`<span class=number>0.5432</span>`)},
+		{uirules.WrapNumber, "-101.95E-99", true, template.HTML(`<span class=number>-101.95E-99</span>`)},
 	}
 	for _, tc := range tests {
 		ok, got := tc.rule.CheckApply("colName", tc.input)
