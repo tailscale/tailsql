@@ -54,9 +54,7 @@ func TestRules(t *testing.T) {
 		{uirules.WrapNumber, "12345", true, template.HTML(`<span class=number>12345</span>`)},
 		{uirules.WrapNumber, "1.abc", false, nil},
 		{uirules.WrapNumber, "-101", true, template.HTML(`<span class=number>-101</span>`)},
-		{uirules.WrapNumber, "9e+72", true, template.HTML(`<span class=number>9e+72</span>`)},
 		{uirules.WrapNumber, "0.5432", true, template.HTML(`<span class=number>0.5432</span>`)},
-		{uirules.WrapNumber, "-101.95E-99", true, template.HTML(`<span class=number>-101.95E-99</span>`)},
 	}
 	for _, tc := range tests {
 		ok, got := tc.rule.CheckApply("colName", tc.input)

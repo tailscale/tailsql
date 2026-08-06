@@ -76,7 +76,7 @@ var LinkURLText = tailsql.UIRewriteRule{
 // (decimal) numbers, having optional leading sign and fractional parts, in a
 // span with the "number" class. This allows special styling to apply.
 var WrapNumber = tailsql.UIRewriteRule{
-	Value: regexp.MustCompile(`^-?\d+(?:\.\d*)?(?:[eE][-+]\d+)?$`),
+	Value: regexp.MustCompile(`^-?\d+(?:\.\d*)?$`),
 	Apply: func(col, s string, _ []string) any {
 		esc := template.HTMLEscapeString(s)
 		return template.HTML(fmt.Sprintf(`<span class=number>%s</span>`, esc))
