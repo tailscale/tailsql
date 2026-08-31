@@ -58,7 +58,7 @@ func (c Client) ServerInfo(ctx context.Context) (*ServerInfo, error) {
 // QueryJSON invokes an SQL query against the specified dataSrc and returns
 // matching rows as a slice of the specified type T. A pointer to T must be a
 // valid input to json.Unmarshal.
-func QueryJSON[T any](ctx context.Context, c Client, dataSrc, sql string) ([]T, error) {
+func (c Client) QueryJSON[T any](ctx context.Context, dataSrc, sql string) ([]T, error) {
 	rc, err := callGET(ctx, c.DoHTTP, c.Server+"/json", url.Values{
 		"src": {dataSrc},
 		"q":   {sql},
@@ -79,6 +79,17 @@ func QueryJSON[T any](ctx context.Context, c Client, dataSrc, sql string) ([]T, 
 		}
 		out = append(out, row)
 	}
+}
+
+// QueryJSON invokes an SQL query against the specified dataSrc and returns
+// matching rows as a slice of the specified type T. A pointer to T must be a
+// valid input to json.Unmarshal.
+//
+// Deprecated: Use [Client.QueryJSON] directly.
+//
+//go:fix inline
+func QueryJSON[T any](ctx context.Context, c Client, dataSrc, sql string) ([]T, error) {
+	return c.QueryJSON[T](ctx, dataSrc, sql)
 }
 
 // Rows is the result of a successful Query call.

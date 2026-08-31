@@ -82,7 +82,7 @@ func TestClient(t *testing.T) {
 			Value string `json:"value"`
 		}
 
-		got, err := tailsql.QueryJSON[row](ctx, cli, "main", `select id, value from test order by 1`)
+		got, err := cli.QueryJSON[row](ctx, "main", `select id, value from test order by 1`)
 		if err != nil {
 			t.Errorf("QueryJSON failed: %v", err)
 		}
@@ -97,7 +97,7 @@ func TestClient(t *testing.T) {
 		type row struct {
 			Count int `json:"n"`
 		}
-		got, err := tailsql.QueryJSON[row](ctx, cli, "main", `named:foo`)
+		got, err := cli.QueryJSON[row](ctx, "main", `named:foo`)
 		if err != nil {
 			t.Errorf("QueryJSON failed: %v", err)
 		}
