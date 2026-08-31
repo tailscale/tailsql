@@ -1,6 +1,6 @@
 module github.com/tailscale/tailsql
 
-go 1.26.6
+go 1.27
 
 require (
 	github.com/creachadair/command v0.2.2
