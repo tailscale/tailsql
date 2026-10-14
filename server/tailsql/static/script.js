@@ -14,8 +14,8 @@ import { Params, Area, Cycle, Loop } from './sprite.js';
     const clearHistory = document.getElementById('clear-history');
     const savedList    = document.getElementById('saved-query-list');
 
-    const nuts = /a?corn|\bnut\b|seed|squirrel|tailsql/i;
-    const velo = 5, delay = 60, runChance = 0.03;
+    const nuts = /a?corn|\bnut\b|seed|squirrel|suna|tailsql/i;
+    const velo = 5, delay = 60, runChance = 0.04;
     let hasRun = false;
 
     const LOCALSTORAGE_KEY_HISTORY = 'tailsql-history';
